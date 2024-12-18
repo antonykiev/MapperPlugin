@@ -1,7 +1,7 @@
-package org.mapper.generator.mapperplugin.logic
+package org.mapper.generator.mapperplugin.data
 
 import com.squareup.kotlinpoet.*
-import org.mapper.generator.mapperplugin.logic.data.ClassMetadata
+import org.mapper.generator.mapperplugin.buisness.data.ClassMetadata
 import java.io.File
 
 class GeneratorEngine(

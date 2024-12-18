@@ -31,7 +31,7 @@
 
     </extensions>
     <actions>
-        <action id="org.mapper.generator.mapperplugin.actions.MapperAction" class="org.mapper.generator.mapperplugin.actions.MapperAction"
+        <action id="org.mapper.generator.mapperplugin.presentation.MapperAction" class="org.mapper.generator.mapperplugin.presentation.MapperAction"
                 text="Demo Plugin" description="Demo Plugin ">
             <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt SLASH"/>
         </action>

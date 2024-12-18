@@ -1,8 +1,8 @@
-package org.mapper.generator.mapperplugin.actions.ui
+package org.mapper.generator.mapperplugin.presentation.ui
 
 import com.intellij.openapi.ui.DialogWrapper
-import org.mapper.generator.mapperplugin.logic.data.ClassMetadata
-import org.mapper.generator.mapperplugin.logic.GeneratorEngine
+import org.mapper.generator.mapperplugin.buisness.data.ClassMetadata
+import org.mapper.generator.mapperplugin.data.GeneratorEngine
 import javax.swing.*
 
 class MapperDialog(

@@ -1,4 +1,4 @@
-package org.mapper.generator.mapperplugin.logic.data
+package org.mapper.generator.mapperplugin.buisness.data
 
 data class ClassMetadata(
     val className: String,

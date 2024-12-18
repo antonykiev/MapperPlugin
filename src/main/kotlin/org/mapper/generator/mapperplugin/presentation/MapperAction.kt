@@ -1,4 +1,4 @@
-package org.mapper.generator.mapperplugin.actions
+package org.mapper.generator.mapperplugin.presentation
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
-import org.mapper.generator.mapperplugin.actions.ui.MapperDialog
-import org.mapper.generator.mapperplugin.logic.data.ClassMetadata
+import org.mapper.generator.mapperplugin.presentation.ui.MapperDialog
+import org.mapper.generator.mapperplugin.buisness.data.ClassMetadata
 
 class MapperAction : AnAction() {
 
