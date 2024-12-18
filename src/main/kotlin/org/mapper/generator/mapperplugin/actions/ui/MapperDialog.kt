@@ -1,9 +1,13 @@
 package org.mapper.generator.mapperplugin.actions.ui
 
 import com.intellij.openapi.ui.DialogWrapper
+import org.mapper.generator.mapperplugin.logic.ClassMetadata
+import org.mapper.generator.mapperplugin.logic.Generator
 import javax.swing.*
 
-class MapperDialog : DialogWrapper(true) {
+class MapperDialog(
+    private val metadata: ClassMetadata
+) : DialogWrapper(true) {
 
     private val inputField1 = JTextField()
     private val inputField2 = JTextField()
@@ -28,6 +32,7 @@ class MapperDialog : DialogWrapper(true) {
 
     fun onShow(action: (result: String) -> Unit)  {
         if (showAndGet()) {
+            Generator(metadata).run()
             action(
 //                result
                 "Success"
