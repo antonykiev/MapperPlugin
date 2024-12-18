@@ -27,4 +27,10 @@
     <extensions defaultExtensionNs="com.intellij">
 
     </extensions>
+    <actions>
+        <action id="org.mapper.generator.mapperplugin.actions.MapperAction" class="org.mapper.generator.mapperplugin.actions.MapperAction"
+                text="Demo Plugin" description="Demo Plugin ">
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt SLASH"/>
+        </action>
+    </actions>
 </idea-plugin>
