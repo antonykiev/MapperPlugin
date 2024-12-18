@@ -1,8 +1,8 @@
 package org.mapper.generator.mapperplugin.actions.ui
 
 import com.intellij.openapi.ui.DialogWrapper
-import org.mapper.generator.mapperplugin.logic.ClassMetadata
-import org.mapper.generator.mapperplugin.logic.Generator
+import org.mapper.generator.mapperplugin.logic.data.ClassMetadata
+import org.mapper.generator.mapperplugin.logic.GeneratorEngine
 import javax.swing.*
 
 class MapperDialog(
@@ -32,7 +32,7 @@ class MapperDialog(
 
     fun onShow(action: (result: String) -> Unit)  {
         if (showAndGet()) {
-            Generator(metadata).run()
+            GeneratorEngine(metadata).run()
             action(
 //                result
                 "Success"

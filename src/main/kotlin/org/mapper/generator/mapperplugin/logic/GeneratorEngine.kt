@@ -1,9 +1,10 @@
 package org.mapper.generator.mapperplugin.logic
 
 import com.squareup.kotlinpoet.*
+import org.mapper.generator.mapperplugin.logic.data.ClassMetadata
 import java.io.File
 
-class Generator(
+class GeneratorEngine(
     private val metadata: ClassMetadata
 ) {
 

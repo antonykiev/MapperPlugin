@@ -7,9 +7,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.mapper.generator.mapperplugin.actions.ui.MapperDialog
-import org.mapper.generator.mapperplugin.logic.ClassMetadata
+import org.mapper.generator.mapperplugin.logic.data.ClassMetadata
 
 class MapperAction : AnAction() {
+
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project!!
         val metadata = extractClassMetadata(project)
