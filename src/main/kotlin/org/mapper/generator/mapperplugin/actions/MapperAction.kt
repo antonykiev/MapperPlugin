@@ -1,16 +1,12 @@
 package org.mapper.generator.mapperplugin.actions
 
-
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.ui.Messages
-import org.mapper.generator.mapperplugin.actions.ui.MapperDialog
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import org.mapper.generator.mapperplugin.actions.ui.MapperDialog
 import org.mapper.generator.mapperplugin.logic.ClassMetadata
 
 class MapperAction : AnAction() {
@@ -40,28 +36,6 @@ class MapperAction : AnAction() {
         } else {
             null
         }
-    }
-
-    fun loadUserResponseClass(project: Project, className: String): Any? {
-        val module = ModuleManager.getInstance(project).modules.firstOrNull()!!
-        val sdk = ModuleRootManager.getInstance(module).sdk
-        val classLoader = sdk?.sdkType?.javaClass?.classLoader!!
-
-        return try {
-            val clazz = classLoader.loadClass(className)
-            clazz.getDeclaredConstructor().newInstance()
-        } catch (e: ClassNotFoundException) {
-            println("Class not found: $className")
-            null
-        } catch (e: Exception) {
-            println("Failed to load class: ${e.message}")
-            null
-        }
-    }
-
-    fun getModuleClassLoader(module: Module): ClassLoader? {
-        val sdk = ModuleRootManager.getInstance(module).sdk
-        return sdk?.sdkType?.javaClass?.classLoader
     }
 
     companion object Constant {
