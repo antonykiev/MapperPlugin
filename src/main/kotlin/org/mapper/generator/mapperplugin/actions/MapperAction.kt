@@ -9,8 +9,8 @@ class MapperAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         MapperDialog().onShow { result ->
             Messages.showInfoMessage(
-                GENERATION_RESULT + result,
-                TITLE
+                /* message = */ GENERATION_RESULT + result,
+                /* title = */ TITLE
             )
         }
     }
