@@ -25,8 +25,6 @@ class MapperAction : AnAction() {
                     GeneratorEngine(it).run()
                 }
 
-
-
             Messages.showInfoMessage(
                 /* message = */ GENERATION_RESULT + result,
                 /* title = */ TITLE
