@@ -57,14 +57,11 @@ class SettingsParseUseCase(
     class TextFileUseCase(
         private val filePath: String,
     ) {
-
         fun text(): Result<String> {
             return runCatching {
                 val path: Path = Paths.get(filePath)
                 val lines: List<String> = Files.readAllLines(path)
-                return@runCatching lines.joinToString("\n").also {
-                    println("TextFile - file text string - $it")
-                }
+                return@runCatching lines.joinToString("\n")
             }
         }
     }
