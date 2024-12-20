@@ -18,6 +18,7 @@ class GeneratorEngine(
     private val createMethodNameUseCase = CreateMethodNameUseCase()
     private val getPackageUseClass = GetPackageUseClass()
     private val getClassNameFromFullNameUseCase = GetClassNameFromFullNameUseCase()
+    private val createStatementUseCase = CreateStatementUseCase()
 
     fun run() {
         //hard code
@@ -44,11 +45,15 @@ class GeneratorEngine(
         val sourcePackageName = getPackageUseClass(sourceClassMetaData.className)
         val targetPackageName = getPackageUseClass(targetClassMetaData.className)
 
+        val statement = createStatementUseCase(
+            sourceProperties = sourceClassMetaData.properties.map { it.first },
+            targetProperties = targetClassMetaData.properties.map { it.first },
+        )
+
         return FunSpec.builder(methodName)
             .returns(ClassName(targetPackageName, targetShortClassName))
             .addParameter("source", ClassName(sourcePackageName, sourceShortClassName))
-            .addStatement("return %T()", ClassName(targetPackageName, targetShortClassName))
-            //.addStatement("target.someField = source.someField")
+            .addStatement("return %T($statement)", ClassName(targetPackageName, targetShortClassName))
             .build()
     }
 
