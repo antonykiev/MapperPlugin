@@ -4,8 +4,9 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.TypeSpec
-import org.mapper.generator.mapperplugin.buisness.generation.*
 import org.mapper.generator.mapperplugin.buisness.generation.CreateMethodNameUseCase
+import org.mapper.generator.mapperplugin.buisness.generation.CreateStatementUseCase
+import org.mapper.generator.mapperplugin.buisness.generation.GetClassNameFromFullNameUseCase
 import org.mapper.generator.mapperplugin.buisness.generation.GetPackageUseClass
 import org.mapper.generator.mapperplugin.buisness.states.ClassMetadata
 import org.mapper.generator.mapperplugin.buisness.states.MappingSettings
@@ -21,13 +22,15 @@ class GeneratorEngine(
     private val createStatementUseCase = CreateStatementUseCase()
 
     fun run() {
-        //hard code
-        println(mappingSettings.mappingRules[0].sourceClassMetaData)
-        val mapFunction = createFunSpec(
-            sourceClassMetaData = mappingSettings.mappingRules[0].sourceClassMetaData,
-            targetClassMetaData = mappingSettings.mappingRules[0].targetMetaData
-        )
-        val mapperClass: TypeSpec = createMapperSpec(mapFunction)
+        val functionList = mappingSettings.mappingRules
+            .map {
+                createFunSpec(
+                    sourceClassMetaData = it.sourceClassMetaData,
+                    targetClassMetaData = it.targetMetaData
+                )
+            }
+
+        val mapperClass: TypeSpec = createMapperSpec(functionList)
         val fileSpec: FileSpec = createFileSpec(mapperClass)
         writeMapperToFile(fileSpec)
     }
@@ -57,10 +60,10 @@ class GeneratorEngine(
             .build()
     }
 
-    private fun createMapperSpec(funSpec: FunSpec): TypeSpec {
-        return TypeSpec.objectBuilder("Mapper")
-            .addFunction(funSpec)
-            .build()
+    private fun createMapperSpec(functionList: List<FunSpec>): TypeSpec {
+        val builder = TypeSpec.objectBuilder("Mapper")
+        functionList.forEach { builder.addFunction(it) }
+        return builder.build()
     }
 
     private fun createFileSpec(typeSpec: TypeSpec): FileSpec {
