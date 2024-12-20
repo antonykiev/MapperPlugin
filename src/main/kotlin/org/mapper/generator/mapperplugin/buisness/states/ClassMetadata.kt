@@ -1,7 +1,6 @@
-package org.mapper.generator.mapperplugin.buisness.data
+package org.mapper.generator.mapperplugin.buisness.states
 
 data class ClassMetadata(
     val className: String,
-    val projectBasePath: String,
     val properties: List<Pair<String, String>>
 )

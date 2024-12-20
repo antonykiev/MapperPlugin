@@ -7,6 +7,9 @@ plugins {
 group = "org.mapper.generator"
 version = "1.0-SNAPSHOT"
 
+val KotlinPoetVersion = "2.0.0"
+val GsonVersion = "2.8.9"
+
 repositories {
     mavenCentral()
 }
@@ -51,5 +54,6 @@ tasks {
 }
 
 dependencies {
-    implementation("com.squareup:kotlinpoet:2.0.0")
+    implementation("com.squareup:kotlinpoet:$KotlinPoetVersion")
+    implementation("com.google.code.gson:gson:$GsonVersion")
 }

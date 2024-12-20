@@ -1,13 +1,11 @@
 package org.mapper.generator.mapperplugin.presentation.ui
 
 import com.intellij.openapi.ui.DialogWrapper
-import org.mapper.generator.mapperplugin.buisness.data.ClassMetadata
+import org.mapper.generator.mapperplugin.buisness.states.ClassMetadata
 import org.mapper.generator.mapperplugin.data.GeneratorEngine
 import javax.swing.*
 
-class MapperDialog(
-    private val metadata: ClassMetadata
-) : DialogWrapper(true) {
+class MapperDialog : DialogWrapper(true) {
 
     private val inputField1 = JTextField()
     private val inputField2 = JTextField()
@@ -30,15 +28,21 @@ class MapperDialog(
         return panel
     }
 
-    fun onShow(action: (result: String) -> Unit)  {
+    fun onShow(action: (result: InputResult) -> Unit)  {
         if (showAndGet()) {
-            GeneratorEngine(metadata).run()
             action(
-//                result
-                "Success"
+                InputResult(
+                    fileSettingsPath = inputField1.text,
+                    outputFolder = inputField2.text
+                )
             )
         }
     }
+
+    data class InputResult(
+        val fileSettingsPath: String,
+        val outputFolder: String
+    )
 
     companion object Constant {
         private const val TITLE = "Mapper Generator"

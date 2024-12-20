@@ -6,16 +6,27 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import org.mapper.generator.mapperplugin.buisness.parse.SettingsParseUseCase
+import org.mapper.generator.mapperplugin.buisness.states.ClassMetadata
+import org.mapper.generator.mapperplugin.data.GeneratorEngine
 import org.mapper.generator.mapperplugin.presentation.ui.MapperDialog
-import org.mapper.generator.mapperplugin.buisness.data.ClassMetadata
 
 class MapperAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project!!
-        val metadata = extractClassMetadata(project)
 
-        MapperDialog(metadata!!).onShow { result ->
+        MapperDialog().onShow { result ->
+            SettingsParseUseCase(
+                settingsFilePath = project.basePath.orEmpty() + "/" + result.fileSettingsPath,
+                project = project,
+            ).settings()
+                .map {
+                    GeneratorEngine(it).run()
+                }
+
+
+
             Messages.showInfoMessage(
                 /* message = */ GENERATION_RESULT + result,
                 /* title = */ TITLE
@@ -23,15 +34,16 @@ class MapperAction : AnAction() {
         }
     }
 
-    private fun extractClassMetadata(project: Project): ClassMetadata? {
+    private fun extractClassMetadata(className: String, project: Project): ClassMetadata? {
         val psiClass = JavaPsiFacade.getInstance(project)
-            .findClass("org.mapper.generator.PersonResponse", GlobalSearchScope.allScope(project))
+            .findClass(className, GlobalSearchScope.allScope(project))
+
+        val projectPath = project.basePath.orEmpty()
 
         return if (psiClass != null) {
             val properties = psiClass.fields.map { it.name to it.type.canonicalText }
             ClassMetadata(
-                className = "org.mapper.generator.PersonResponse",
-                projectBasePath = project.basePath.orEmpty(),
+                className = className,
                 properties = properties
             )
         } else {
