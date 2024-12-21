@@ -9,6 +9,7 @@ import org.mapper.generator.mapperplugin.buisness.generation.CreateStatementUseC
 import org.mapper.generator.mapperplugin.buisness.generation.GetClassNameFromFullNameUseCase
 import org.mapper.generator.mapperplugin.buisness.generation.GetPackageUseClass
 import org.mapper.generator.mapperplugin.buisness.states.ClassMetadata
+import org.mapper.generator.mapperplugin.buisness.states.Detail
 import org.mapper.generator.mapperplugin.buisness.states.MappingSettings
 import java.io.File
 
@@ -26,7 +27,7 @@ class GeneratorEngine(
             .map {
                 createFunSpec(
                     sourceClassMetaData = it.sourceClassMetaData,
-                    targetClassMetaData = it.targetMetaData
+                    targetClassMetaData = it.detail
                 )
             }
 
@@ -37,20 +38,20 @@ class GeneratorEngine(
 
     private fun createFunSpec(
         sourceClassMetaData: ClassMetadata,
-        targetClassMetaData: ClassMetadata,
+        targetClassMetaData: Detail,
     ): FunSpec {
 
         val sourceShortClassName = getClassNameFromFullNameUseCase(sourceClassMetaData.className)
-        val targetShortClassName = getClassNameFromFullNameUseCase(targetClassMetaData.className)
+        val targetShortClassName = getClassNameFromFullNameUseCase(targetClassMetaData.targetMetaData.className)
 
         val methodName = createMethodNameUseCase(sourceShortClassName, targetShortClassName)
 
         val sourcePackageName = getPackageUseClass(sourceClassMetaData.className)
-        val targetPackageName = getPackageUseClass(targetClassMetaData.className)
+        val targetPackageName = getPackageUseClass(targetClassMetaData.targetMetaData.className)
 
         val statement = createStatementUseCase(
             sourceProperties = sourceClassMetaData.properties.map { it.first },
-            targetProperties = targetClassMetaData.properties.map { it.first },
+            detail = targetClassMetaData,
         )
 
         return FunSpec.builder(methodName)

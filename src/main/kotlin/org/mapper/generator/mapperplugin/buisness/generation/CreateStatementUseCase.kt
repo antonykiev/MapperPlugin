@@ -1,18 +1,29 @@
 package org.mapper.generator.mapperplugin.buisness.generation
 
+import org.mapper.generator.mapperplugin.buisness.states.Detail
+
 class CreateStatementUseCase {
 
     operator fun invoke(
         sourceProperties: List<String>,
-        targetProperties: List<String>
+        detail: Detail
     ): String {
         return  "\n" + sourceProperties
             .map { sourceProperties ->
-                val targetProperty = targetProperties.find { it == sourceProperties }.orEmpty()
-                return@map createStatementLine(
-                    sourceProperty = sourceProperties,
-                    targetProperty = targetProperty
-                )
+
+                val targetProperty = detail.targetMetaData.properties
+                    .map { it.first }
+                    .find { it == sourceProperties }
+                    .orEmpty()
+
+                return@map if (detail.propertyMap.containsKey(sourceProperties)) {
+                     detail.propertyMap[targetProperty] + ",\n"
+                } else {
+                    createStatementLine(
+                        sourceProperty = sourceProperties,
+                        targetProperty = targetProperty
+                    )
+                }
             }.joinToString(separator = "")
     }
 
