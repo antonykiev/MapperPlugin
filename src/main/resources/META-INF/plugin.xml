@@ -1,5 +1,13 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
+    <actions>
+        <action id="org.mapper.generator.mapperplugin.presentation.MapperAction"
+                class="org.mapper.generator.mapperplugin.presentation.MapperAction"
+                text="Generate Mappers"
+                description="Set up and generate class Mapper">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+        </action>
+    </actions>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>org.mapper.generator.MapperPlugin</id>
 
