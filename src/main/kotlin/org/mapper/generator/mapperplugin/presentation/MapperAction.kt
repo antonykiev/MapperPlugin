@@ -13,20 +13,26 @@ class MapperAction : AnAction() {
         val project = e.project!!
 
         MapperDialog().onShow { result ->
-            val generationResultString = SettingsParseUseCase(
+            SettingsParseUseCase(
                 settingsFilePath = project.basePath.orEmpty() + "/" + result.fileSettingsPath,
                 project = project,
             ).settings()
                 .map {
                     GeneratorEngine(it).run()
-                }.getOrElse {
-                    return@getOrElse "FAILED " + it.message.orEmpty()
-                }
-
-            Messages.showInfoMessage(
-                /* message = */ GENERATION_RESULT + generationResultString,
-                /* title = */ TITLE
-            )
+                }.fold(
+                    onSuccess = {
+                        Messages.showInfoMessage(
+                            /* message = */ GENERATION_RESULT + it,
+                            /* title = */ TITLE
+                        )
+                    },
+                    onFailure = {
+                        Messages.showErrorDialog(
+                            /* message = */ "FAILED " + it.message.orEmpty(),
+                            /* title = */ TITLE
+                        )
+                    }
+                )
         }
     }
 
