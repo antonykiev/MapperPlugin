@@ -4,10 +4,7 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.TypeSpec
-import org.mapper.generator.mapperplugin.buisness.generation.CreateMethodNameUseCase
-import org.mapper.generator.mapperplugin.buisness.generation.CreateStatementUseCase
-import org.mapper.generator.mapperplugin.buisness.generation.GetClassNameFromFullNameUseCase
-import org.mapper.generator.mapperplugin.buisness.generation.GetPackageFromFullNameUseClass
+import org.mapper.generator.mapperplugin.buisness.generation.*
 import org.mapper.generator.mapperplugin.buisness.states.ClassMetadata
 import org.mapper.generator.mapperplugin.buisness.states.Detail
 import org.mapper.generator.mapperplugin.buisness.states.MappingSettings
@@ -21,19 +18,25 @@ class GeneratorEngine(
     private val getPackageUseClass = GetPackageFromFullNameUseClass()
     private val getClassNameFromFullNameUseCase = GetClassNameFromFullNameUseCase()
     private val createStatementUseCase = CreateStatementUseCase()
+    private val successMessageUseCase = SuccessMessageUseCase()
 
-    fun run() {
-        val functionList = mappingSettings.mappingRules
-            .map {
-                createFunSpec(
-                    sourceClassMetaData = it.sourceClassMetaData,
-                    targetClassMetaData = it.detail
-                )
-            }
+    fun run(): String {
+        return runCatching {
+            val functionList = mappingSettings.mappingRules
+                .map {
+                    createFunSpec(
+                        sourceClassMetaData = it.sourceClassMetaData,
+                        targetClassMetaData = it.detail
+                    )
+                }
 
-        val mapperClass: TypeSpec = createMapperSpec(functionList)
-        val fileSpec: FileSpec = createFileSpec(mapperClass)
-        writeMapperToFile(fileSpec)
+            val mapperClass: TypeSpec = createMapperSpec(functionList)
+            val fileSpec: FileSpec = createFileSpec(mapperClass)
+            writeMapperToFile(fileSpec)
+            return@runCatching successMessageUseCase(fileSpec, mappingSettings)
+        }.getOrElse {
+            return@getOrElse it.message.orEmpty()
+        }
     }
 
     private fun createFunSpec(
@@ -70,7 +73,6 @@ class GeneratorEngine(
     private fun createFileSpec(typeSpec: TypeSpec): FileSpec {
         val packageName = getPackageUseClass(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_PACKAGE }
         val fileName = getClassNameFromFullNameUseCase(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_NAME }
-        println("Generating file: $packageName.$fileName")
         return FileSpec.builder(
             packageName = packageName,
             fileName = fileName

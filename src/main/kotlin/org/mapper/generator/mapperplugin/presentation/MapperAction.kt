@@ -13,16 +13,18 @@ class MapperAction : AnAction() {
         val project = e.project!!
 
         MapperDialog().onShow { result ->
-            SettingsParseUseCase(
+            val generationResultString = SettingsParseUseCase(
                 settingsFilePath = project.basePath.orEmpty() + "/" + result.fileSettingsPath,
                 project = project,
             ).settings()
                 .map {
                     GeneratorEngine(it).run()
+                }.getOrElse {
+                    return@getOrElse "FAILED " + it.message.orEmpty()
                 }
 
             Messages.showInfoMessage(
-                /* message = */ GENERATION_RESULT + result,
+                /* message = */ GENERATION_RESULT + generationResultString,
                 /* title = */ TITLE
             )
         }
