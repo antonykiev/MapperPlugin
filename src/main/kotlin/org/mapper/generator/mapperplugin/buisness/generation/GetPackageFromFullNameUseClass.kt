@@ -1,13 +1,17 @@
 package org.mapper.generator.mapperplugin.buisness.generation
 
-class GetClassNameFromFullNameUseCase {
+class GetPackageFromFullNameUseClass {
 
     operator fun invoke(fullClassName: String): String {
         fullClassName.ifEmpty {
             return ""
         }
         return runCatching {
-            fullClassName.substring(startIndex = fullClassName.lastIndexOf(".") + 1)
+            fullClassName.substring(
+                startIndex = 0,
+                endIndex = fullClassName.lastIndexOf(".")
+            )
         }.getOrDefault("")
+
     }
 }

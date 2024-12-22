@@ -18,6 +18,7 @@ class MapRulesModelToMappingSettings {
         project: Project,
     ): MappingSettings {
         return MappingSettings(
+            mapperName = simpleJsonRulesModel.mapperName.orEmpty(),
             projectBasePath = project.basePath.orEmpty(),
             outputDir = simpleJsonRulesModel.outputDir,
             mappingRules = simpleJsonRulesModel.mappingRules.map { stringStringEntry: Map.Entry<String, DetailJson> ->

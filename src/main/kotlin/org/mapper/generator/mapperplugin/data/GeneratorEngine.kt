@@ -7,7 +7,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import org.mapper.generator.mapperplugin.buisness.generation.CreateMethodNameUseCase
 import org.mapper.generator.mapperplugin.buisness.generation.CreateStatementUseCase
 import org.mapper.generator.mapperplugin.buisness.generation.GetClassNameFromFullNameUseCase
-import org.mapper.generator.mapperplugin.buisness.generation.GetPackageUseClass
+import org.mapper.generator.mapperplugin.buisness.generation.GetPackageFromFullNameUseClass
 import org.mapper.generator.mapperplugin.buisness.states.ClassMetadata
 import org.mapper.generator.mapperplugin.buisness.states.Detail
 import org.mapper.generator.mapperplugin.buisness.states.MappingSettings
@@ -18,7 +18,7 @@ class GeneratorEngine(
 ) {
 
     private val createMethodNameUseCase = CreateMethodNameUseCase()
-    private val getPackageUseClass = GetPackageUseClass()
+    private val getPackageUseClass = GetPackageFromFullNameUseClass()
     private val getClassNameFromFullNameUseCase = GetClassNameFromFullNameUseCase()
     private val createStatementUseCase = CreateStatementUseCase()
 
@@ -62,13 +62,19 @@ class GeneratorEngine(
     }
 
     private fun createMapperSpec(functionList: List<FunSpec>): TypeSpec {
-        val builder = TypeSpec.objectBuilder("Mapper")
+        val builder = TypeSpec.objectBuilder(getClassNameFromFullNameUseCase(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_NAME })
         functionList.forEach { builder.addFunction(it) }
         return builder.build()
     }
 
     private fun createFileSpec(typeSpec: TypeSpec): FileSpec {
-        return FileSpec.builder("com.example.mapper", "Mapper")
+        val packageName = getPackageUseClass(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_PACKAGE }
+        val fileName = getClassNameFromFullNameUseCase(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_NAME }
+        println("Generating file: $packageName.$fileName")
+        return FileSpec.builder(
+            packageName = packageName,
+            fileName = fileName
+        )
             .addType(typeSpec)
             .build()
     }
@@ -77,5 +83,10 @@ class GeneratorEngine(
         val outputDirectory = File(mappingSettings.projectBasePath + mappingSettings.outputDir)
         outputDirectory.mkdirs()
         fileSpec.writeTo(outputDirectory)
+    }
+
+    companion object Constant {
+        const val DEFAULT_MAPPER_PACKAGE = "com.plugin.default"
+        const val DEFAULT_MAPPER_NAME = "Mapper"
     }
 }
