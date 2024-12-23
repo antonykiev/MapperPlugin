@@ -22,17 +22,4 @@ class SettingsParseUseCase(
             .mapFlat(parseStringToRuleModelUseCase::invoke)
             .mapFlat { mapRulesModelToMappingSettings(it, project) }
     }
-
-    class TextFileUseCase(
-        private val filePath: String,
-    ) {
-        fun text(): Result<String> {
-            return runCatching {
-                val path: Path = Paths.get(filePath)
-                val lines: List<String> = Files.readAllLines(path)
-                return@runCatching lines.joinToString("\n")
-                    .also { println(it) }
-            }
-        }
-    }
 }
