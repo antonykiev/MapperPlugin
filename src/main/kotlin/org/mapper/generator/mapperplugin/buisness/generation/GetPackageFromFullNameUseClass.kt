@@ -6,6 +6,8 @@ class GetPackageFromFullNameUseClass {
         fullClassName.ifEmpty {
             return ""
         }
+        if (!fullClassName.contains("."))
+            return fullClassName
         return runCatching {
             fullClassName.substring(
                 startIndex = 0,

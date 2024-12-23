@@ -68,13 +68,14 @@ class GeneratorEngine(
     }
 
     private fun createMapperSpec(functionList: List<FunSpec>): TypeSpec {
-        val builder = TypeSpec.objectBuilder(getClassNameFromFullNameUseCase(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_NAME })
+        val builder =
+            TypeSpec.objectBuilder(getClassNameFromFullNameUseCase(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_NAME })
         functionList.forEach { builder.addFunction(it) }
         return builder.build()
     }
 
     private fun createFileSpec(typeSpec: TypeSpec): FileSpec {
-        val packageName = getPackageUseClass(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_PACKAGE }
+        val packageName = mappingSettings.outputDir.ifEmpty { DEFAULT_MAPPER_PACKAGE }
         val fileName = getClassNameFromFullNameUseCase(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_NAME }
         return FileSpec.builder(
             packageName = packageName,
@@ -85,7 +86,7 @@ class GeneratorEngine(
     }
 
     private fun writeMapperToFile(fileSpec: FileSpec) {
-        val outputDirectory = File(mappingSettings.projectBasePath + mappingSettings.outputDir)
+        val outputDirectory = File(mappingSettings.projectBasePath)
         outputDirectory.mkdirs()
         fileSpec.writeTo(outputDirectory)
     }
