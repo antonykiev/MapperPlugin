@@ -15,16 +15,26 @@ class SettingsParseUseCase(
 
     fun settings(): Result<MappingSettings> {
         return validateSettingsFile(settingsFilePath)
-            .mapFlat { textFileUseCase.invoke(settingsFilePath) }
+            .mapFlat {
+                textFileUseCase.invoke(
+                    project = project,
+                    filePath = settingsFilePath
+                )
+            }
             .mapFlat { parseStringToRuleModelUseCase.invoke(it) }
-            .mapFlat { mapRulesModelToMappingSettings.invoke(it, project) }
+            .mapFlat {
+                mapRulesModelToMappingSettings.invoke(
+                    simpleJsonRulesModel = it,
+                    project = project
+                )
+            }
     }
 
     private fun validateSettingsFile(settingsFilePath: String): Result<Unit> {
         return runCatching {
-            if (settingsFilePath.isEmpty()) throw Exception("File path is empty")
-            val settingFile = File(settingsFilePath)
-            if (!settingFile.exists() || !settingFile.isFile) throw Exception("File not found")
+//            if (settingsFilePath.isEmpty()) throw Exception("File path is empty")
+//            val settingFile = File(settingsFilePath)
+//            if (!settingFile.exists() || !settingFile.isFile) throw Exception("File not found")
         }
     }
 }
