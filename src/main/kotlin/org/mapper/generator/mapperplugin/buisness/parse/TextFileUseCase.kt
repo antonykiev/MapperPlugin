@@ -6,7 +6,7 @@ import java.nio.file.Paths
 
 class TextFileUseCase {
 
-    fun text(filePath: String): Result<String> {
+    operator fun invoke(filePath: String): Result<String> {
         return runCatching {
             val path: Path = Paths.get(filePath)
             val lines: List<String> = Files.readAllLines(path)
