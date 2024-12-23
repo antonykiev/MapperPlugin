@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.mapper.generator"
-version = "1.0-SNAPSHOT"
+version = "0.1-SNAPSHOT"
 
 val KotlinPoetVersion = "2.0.0"
 val GsonVersion = "2.8.9"
