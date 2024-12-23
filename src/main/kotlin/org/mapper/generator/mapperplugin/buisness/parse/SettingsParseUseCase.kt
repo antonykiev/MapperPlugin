@@ -20,25 +20,7 @@ class SettingsParseUseCase(
     fun settings(): Result<MappingSettings> {
         return TextFileUseCase(settingsFilePath).text()
             .mapFlat(parseStringToRuleModelUseCase::invoke)
-            .map { mapRulesModelToMappingSettings(it, project) }
-    }
-
-    class ClassNameToClassMetadataUseCase {
-
-        fun classMetadata(
-            project: Project,
-            className: String
-        ): Result<ClassMetadata> {
-            val psiFacade = JavaPsiFacade.getInstance(project)
-            val psiClass = psiFacade.findClass(className, GlobalSearchScope.allScope(project))
-                ?: return Result.failure(Exception("Can not init PSI CLASS ${project.name} Project name - $project, className - $className"))
-            return Result.success(
-                value = ClassMetadata(
-                    className = className,
-                    properties = psiClass.fields.map { it.name to it.type.canonicalText }
-                )
-            )
-        }
+            .mapFlat { mapRulesModelToMappingSettings(it, project) }
     }
 
     class TextFileUseCase(
@@ -49,6 +31,7 @@ class SettingsParseUseCase(
                 val path: Path = Paths.get(filePath)
                 val lines: List<String> = Files.readAllLines(path)
                 return@runCatching lines.joinToString("\n")
+                    .also { println(it) }
             }
         }
     }

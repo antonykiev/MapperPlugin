@@ -1,7 +1,6 @@
 package org.mapper.generator.mapperplugin.buisness.parse
 
 import com.intellij.openapi.project.Project
-import org.mapper.generator.mapperplugin.buisness.parse.SettingsParseUseCase.ClassNameToClassMetadataUseCase
 import org.mapper.generator.mapperplugin.buisness.states.Detail
 import org.mapper.generator.mapperplugin.buisness.states.MappingRule
 import org.mapper.generator.mapperplugin.buisness.states.MappingSettings
@@ -16,8 +15,8 @@ class MapRulesModelToMappingSettings {
     operator fun invoke(
         simpleJsonRulesModel: SimpleJsonRulesModel,
         project: Project,
-    ): MappingSettings {
-        return MappingSettings(
+    ): Result<MappingSettings> {
+        return runCatching { MappingSettings(
             mapperName = simpleJsonRulesModel.mapperName.orEmpty(),
             projectBasePath = project.basePath.orEmpty(),
             outputDir = simpleJsonRulesModel.outputDir,
@@ -40,6 +39,7 @@ class MapRulesModelToMappingSettings {
                     )
                 )
             }
-        )
+        ) }
+
     }
 }
