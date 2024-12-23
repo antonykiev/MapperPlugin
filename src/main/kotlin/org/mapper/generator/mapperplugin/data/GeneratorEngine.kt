@@ -14,14 +14,17 @@ class GeneratorEngine(
     private val mappingSettings: MappingSettings
 ) {
 
+    private val nestedMappingValidator = NestedMappingValidator()
     private val createMethodNameUseCase = CreateMethodNameUseCase()
     private val getPackageUseClass = GetPackageFromFullNameUseClass()
     private val getClassNameFromFullNameUseCase = GetClassNameFromFullNameUseCase()
     private val createStatementUseCase = CreateStatementUseCase()
     private val successMessageUseCase = SuccessMessageUseCase()
 
-    fun run(): String {
+    fun run(): Result<String> {
         return runCatching {
+            nestedMappingValidator(mappingSettings.mappingRules)
+
             val functionList = mappingSettings.mappingRules
                 .map {
                     createFunSpec(
@@ -33,9 +36,9 @@ class GeneratorEngine(
             val mapperClass: TypeSpec = createMapperSpec(functionList)
             val fileSpec: FileSpec = createFileSpec(mapperClass)
             writeMapperToFile(fileSpec)
-            return@runCatching successMessageUseCase(fileSpec, mappingSettings)
+            return@runCatching Result.success(successMessageUseCase(fileSpec, mappingSettings))
         }.getOrElse {
-            return@getOrElse it.message.orEmpty()
+            return@getOrElse Result.failure(it)
         }
     }
 

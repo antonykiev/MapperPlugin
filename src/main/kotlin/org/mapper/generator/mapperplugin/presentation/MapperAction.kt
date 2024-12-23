@@ -1,5 +1,6 @@
 package org.mapper.generator.mapperplugin.presentation
 
+import com.intellij.execution.processTools.mapFlat
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.Messages
@@ -17,7 +18,7 @@ class MapperAction : AnAction() {
                 settingsFilePath = project.basePath.orEmpty() + "/" + result.fileSettingsPath,
                 project = project,
             ).settings()
-                .map {
+                .mapFlat {
                     GeneratorEngine(it).run()
                 }.fold(
                     onSuccess = {
