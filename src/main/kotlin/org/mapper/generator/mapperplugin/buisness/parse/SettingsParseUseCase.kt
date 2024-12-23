@@ -6,6 +6,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.mapper.generator.mapperplugin.buisness.states.ClassMetadata
 import org.mapper.generator.mapperplugin.buisness.states.MappingSettings
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -16,10 +17,20 @@ class SettingsParseUseCase(
 ) {
     private val parseStringToRuleModelUseCase = ParseStringToRuleModelUseCase()
     private val mapRulesModelToMappingSettings = MapRulesModelToMappingSettings()
+    private val textFileUseCase = TextFileUseCase()
 
     fun settings(): Result<MappingSettings> {
-        return TextFileUseCase(settingsFilePath).text()
+        return validateSettingsFile(settingsFilePath)
+            .mapFlat { textFileUseCase.text(settingsFilePath) }
             .mapFlat(parseStringToRuleModelUseCase::invoke)
             .mapFlat { mapRulesModelToMappingSettings(it, project) }
+    }
+
+    private fun validateSettingsFile(settingsFilePath: String): Result<Unit> {
+        return runCatching {
+            if (settingsFilePath.isEmpty()) throw Exception("File path is empty")
+            val settingFile = File(settingsFilePath)
+            if (!settingFile.exists() || !settingFile.isFile) throw Exception("File not found")
+        }
     }
 }
