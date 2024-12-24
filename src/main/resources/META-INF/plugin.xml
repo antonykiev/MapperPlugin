@@ -13,17 +13,37 @@
 
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
-    <name>MapperPlugin</name>
+    <name>MapCraft</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor email="support@yourcompany.com" url="https://www.yourcompany.com">YourCompany</vendor>
+    <vendor email="1mailanton@gmail.com" >Shcherbakov Anton</vendor>
 
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
     <description><![CDATA[
-    Enter short description for your plugin here.<br>
-    <em>most HTML tags may be used</em>
+        <h1>MapCraft: Your Ultimate Mapping Solution</h1>
+    <p>MapCraft is an advanced and intuitive mapping plugin designed to streamline your workflow and enhance your productivity. Whether you are a developer, data analyst, or project manager, MapCraft provides a comprehensive suite of tools to help you efficiently manage and visualize your data.</p>
+
+    <h2>Key Features:</h2>
+    <ul>
+        <li><strong>Seamless Data Mapping:</strong> Easily map key-value pairs with an intuitive interface and robust functionality.</li>
+        <li><strong>Real-time Updates:</strong> Automatically refresh and update maps to ensure you always work with the latest data.</li>
+        <li><strong>Customizable:</strong> Tailor MapCraft to fit your specific needs with customizable settings and options.</li>
+        <li><strong>Integration Ready:</strong> Effortlessly integrate with other tools and platforms to enhance your workflow.</li>
+        <li><strong>User-friendly Interface:</strong> Enjoy a clean and easy-to-use interface that simplifies complex mapping tasks.</li>
+        <li><strong>Comprehensive Documentation:</strong> Access detailed guides and tutorials to get the most out of MapCraft.</li>
+    </ul>
+
+    <h2>Benefits:</h2>
+    <ul>
+        <li><strong>Improve Efficiency:</strong> Save time and reduce errors with automated data mapping and real-time updates.</li>
+        <li><strong>Enhance Data Accuracy:</strong> Ensure data consistency and accuracy with advanced mapping features.</li>
+        <li><strong>Boost Productivity:</strong> Streamline your workflow with a plugin designed to meet your mapping needs.</li>
+        <li><strong>Versatile Applications:</strong> Ideal for software development, data analysis, project management, and more.</li>
+    </ul>
+
+    <p>Experience the power of advanced data mapping with MapCraft. Download and install now to take your data management to the next level!</p>
   ]]></description>
 
     <!-- Product and plugin compatibility requirements.
