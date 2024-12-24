@@ -23,7 +23,7 @@ class GeneratorEngine(
 
     fun run(): Result<String> {
         return runCatching {
-            nestedMappingValidator(mappingSettings.mappingRules)
+            nestedMappingValidator.invoke(mappingSettings.mappingRules)
 
             val functionList = mappingSettings.mappingRules
                 .map {
@@ -36,7 +36,7 @@ class GeneratorEngine(
             val mapperClass: TypeSpec = createMapperSpec(functionList)
             val fileSpec: FileSpec = createFileSpec(mapperClass)
             writeMapperToFile(fileSpec)
-            return@runCatching Result.success(successMessageUseCase(fileSpec, mappingSettings))
+            return@runCatching Result.success(successMessageUseCase.invoke(fileSpec))
         }.getOrElse {
             return@getOrElse Result.failure(it)
         }
@@ -47,15 +47,15 @@ class GeneratorEngine(
         targetClassMetaData: Detail,
     ): FunSpec {
 
-        val sourceShortClassName = getClassNameFromFullNameUseCase(sourceClassMetaData.className)
-        val targetShortClassName = getClassNameFromFullNameUseCase(targetClassMetaData.targetMetaData.className)
+        val sourceShortClassName = getClassNameFromFullNameUseCase.invoke(sourceClassMetaData.className)
+        val targetShortClassName = getClassNameFromFullNameUseCase.invoke(targetClassMetaData.targetMetaData.className)
 
-        val methodName = createMethodNameUseCase(sourceShortClassName, targetShortClassName)
+        val methodName = createMethodNameUseCase.invoke(sourceShortClassName, targetShortClassName)
 
-        val sourcePackageName = getPackageUseClass(sourceClassMetaData.className)
-        val targetPackageName = getPackageUseClass(targetClassMetaData.targetMetaData.className)
+        val sourcePackageName = getPackageUseClass.invoke(sourceClassMetaData.className)
+        val targetPackageName = getPackageUseClass.invoke(targetClassMetaData.targetMetaData.className)
 
-        val statement = createStatementUseCase(
+        val statement = createStatementUseCase.invoke(
             sourceProperties = sourceClassMetaData.properties.map { it.first },
             detail = targetClassMetaData,
         )
@@ -69,7 +69,7 @@ class GeneratorEngine(
 
     private fun createMapperSpec(functionList: List<FunSpec>): TypeSpec {
         val builder =
-            TypeSpec.objectBuilder(getClassNameFromFullNameUseCase(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_NAME })
+            TypeSpec.objectBuilder(getClassNameFromFullNameUseCase.invoke(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_NAME })
         functionList.forEach { builder.addFunction(it) }
         return builder.build()
     }
