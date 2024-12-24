@@ -52,8 +52,8 @@ class GeneratorEngine(
 
         val methodName = createMethodNameUseCase.invoke(sourceShortClassName, targetShortClassName)
 
-        val sourcePackageName = getPackageUseClass.invoke(sourceClassMetaData.className)
-        val targetPackageName = getPackageUseClass.invoke(targetClassMetaData.targetMetaData.className)
+        val sourcePackageName = getPackageUseClass.invoke(sourceClassMetaData.className, sourceClassMetaData.className)
+        val targetPackageName = getPackageUseClass.invoke(targetClassMetaData.targetMetaData.className, targetClassMetaData.targetMetaData.className)
 
         val statement = createStatementUseCase.invoke(
             sourceProperties = sourceClassMetaData.properties.map { it.first },
@@ -75,7 +75,7 @@ class GeneratorEngine(
     }
 
     private fun createFileSpec(typeSpec: TypeSpec): FileSpec {
-        val packageName = mappingSettings.outputDir.ifEmpty { DEFAULT_MAPPER_PACKAGE }
+        val packageName = getPackageUseClass(mappingSettings.mapperName, DEFAULT_MAPPER_PACKAGE)
         val fileName = getClassNameFromFullNameUseCase(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_NAME }
         return FileSpec.builder(
             packageName = packageName,
@@ -86,7 +86,9 @@ class GeneratorEngine(
     }
 
     private fun writeMapperToFile(fileSpec: FileSpec) {
-        val outputDirectory = File(mappingSettings.projectBasePath)
+        val outputDirectory = File(/* pathname = */ mappingSettings.projectBasePath + File.separator +
+                mappingSettings.outputDir.replace(".", File.separator)
+        )
         outputDirectory.mkdirs()
         fileSpec.writeTo(outputDirectory)
     }

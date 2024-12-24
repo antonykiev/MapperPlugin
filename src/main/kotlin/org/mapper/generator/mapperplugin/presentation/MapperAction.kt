@@ -8,6 +8,7 @@ import org.mapper.generator.mapperplugin.buisness.parse.SettingsParseUseCase
 import org.mapper.generator.mapperplugin.data.GeneratorEngine
 import org.mapper.generator.mapperplugin.data.Storage
 import org.mapper.generator.mapperplugin.presentation.ui.MapperDialog
+import java.io.File
 
 class MapperAction : AnAction() {
 
@@ -18,7 +19,7 @@ class MapperAction : AnAction() {
             Storage.saveKeyValue(LAST_INPUT_KEY, result.fileSettingsPath)
 
             SettingsParseUseCase(
-                settingsFilePath = project.basePath.orEmpty() + "/" + result.fileSettingsPath,
+                settingsFilePath = project.basePath.orEmpty() + File.separator + result.fileSettingsPath,
                 project = project,
             ).settings()
                 .mapFlat {
