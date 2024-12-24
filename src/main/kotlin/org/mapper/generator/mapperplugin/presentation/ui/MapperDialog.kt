@@ -1,13 +1,11 @@
 package org.mapper.generator.mapperplugin.presentation.ui
 
 import com.intellij.openapi.ui.DialogWrapper
-import org.mapper.generator.mapperplugin.buisness.states.ClassMetadata
-import org.mapper.generator.mapperplugin.data.GeneratorEngine
 import javax.swing.*
 
-class MapperDialog : DialogWrapper(true) {
+class MapperDialog(lastInput: String) : DialogWrapper(true) {
 
-    private val inputField1 = JTextField()
+    private val inputField1 = JTextField(lastInput)
     private val message1 = JLabel(MESSAGE_FILE)
 
     init {
