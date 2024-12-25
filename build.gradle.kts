@@ -1,34 +1,66 @@
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.9.25"
-    id("org.jetbrains.intellij") version "1.17.4"
+    id("org.jetbrains.kotlin.jvm") version "2.1.0"
+    id("org.jetbrains.intellij.platform")
+    id("org.jetbrains.changelog") version "2.2.1"
 }
 
-group = "org.mapper.generator"
-version = "0.2.9-SNAPSHOT"
+group = providers.gradleProperty("pluginGroup").get()
+version = providers.gradleProperty("pluginVersion").get()
 
-val KotlinPoetVersion = "2.0.0"
-val GsonVersion = "2.8.9"
+val kotlinPoetVersion = "2.0.0"
+val gsonVersion = "2.8.9"
+dependencies {
 
-repositories {
-    mavenCentral()
+    implementation("com.squareup:kotlinpoet:$kotlinPoetVersion")
+    implementation("com.google.code.gson:gson:$gsonVersion")
+
+    intellijPlatform {
+//        intellijIdeaCommunity("2024.3.1.1")
+        local("C:\\Program Files\\JetBrains\\IntelliJ IDEA Community Edition 2024.3.1")
+
+        bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
+
+        plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
+
+        jetbrainsRuntime()
+        instrumentationTools()
+        pluginVerifier()
+        zipSigner()
+        testFramework(TestFrameworkType.Platform)
+    }
 }
 
-// Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
-intellij {
-    version.set("2024.3.1.1")
-    type.set("IC") // Target IDE Platform
+intellijPlatform {
+    buildSearchableOptions = true
+    instrumentCode = true
+    projectName = project.name
 
-    plugins.set(
-        listOf(
-            "java",
-        )
-    )
+    pluginConfiguration {
+        ideaVersion {
+            sinceBuild = providers.gradleProperty("pluginSinceBuild")
+        }
+    }
+
+    signing {
+        certificateChainFile = file("chain.crt")
+        privateKeyFile = file("private.pem")
+        password = "admin123"
+    }
+
+    publishing {
+        token = System.getenv("PUBLISH_TOKEN")
+    }
+}
+
+changelog {
+    groups.empty()
+    repositoryUrl = providers.gradleProperty("pluginRepositoryUrl")
 }
 
 tasks {
-    // Set the JVM compatibility versions
     withType<JavaCompile> {
         sourceCompatibility = "17"
         targetCompatibility = "17"
@@ -36,27 +68,30 @@ tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "17"
     }
-
-    patchPluginXml {
-        sinceBuild.set("241")
-        untilBuild.set("243.*")
+    wrapper {
+        gradleVersion = providers.gradleProperty("gradleVersion").get()
     }
 
-    signPlugin {
-        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-        privateKey.set(System.getenv("PRIVATE_KEY"))
-        password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
+    patchPluginXml {
+        sinceBuild = providers.gradleProperty("pluginSinceBuild")
+        untilBuild = provider { null }
+
+//        changeNotes.set(provider {
+//            val version = project.version.toString() // Get the version from the project
+//            val changelogItem = changelog.get(version) // Get the changelog item for that version
+//            val rendered = changelog.renderItem(
+//                changelogItem,
+//                Changelog.OutputType.HTML
+//            )
+//            println("Rendered Change Notes: $rendered")
+//            rendered
+//        })
     }
 
     publishPlugin {
-        token.set(System.getenv("PUBLISH_TOKEN"))
+        dependsOn(patchChangelog)
     }
     buildSearchableOptions {
         enabled = false
     }
-}
-
-dependencies {
-    implementation("com.squareup:kotlinpoet:$KotlinPoetVersion")
-    implementation("com.google.code.gson:gson:$GsonVersion")
 }
