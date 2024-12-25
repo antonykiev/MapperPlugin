@@ -44,7 +44,7 @@ class GeneratorEngine(
                 ?: (sourceClass as KtLightClassForSourceDeclaration).kotlinOrigin.containingKtFile
 
             if (settings.isExtensionFunc) {
-                stringBuilder.append("fun ${sourceClass.name}.To${targetClass.name}(): ${targetClass.name} { return ${targetClass.name}(")
+                stringBuilder.append("fun ${sourceClass.name}.to${targetClass.name}(): ${targetClass.name} { return ${targetClass.name}(")
                 build(
                     project = project,
                     sourceClass = targetClass,
@@ -56,7 +56,7 @@ class GeneratorEngine(
                 )
                 stringBuilder.append(")}")
             } else {
-                stringBuilder.append("fun ${sourceClass.name}to${targetClass.name}(${sourceClass.name?.lowercase()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
+                stringBuilder.append("fun ${sourceClass.name}To${targetClass.name}(${sourceClass.name?.lowercase()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
                 build(
                     project = project,
                     sourceClass = targetClass,
@@ -168,9 +168,4 @@ class GeneratorEngine(
     }
 
     private fun PsiType.asPsiClass(): PsiClass? = PsiUtil.resolveClassInType(this)
-
-
-    companion object Constant {
-
-    }
 }
