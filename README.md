@@ -74,6 +74,7 @@ What needs to be done
 
 - add fields validations;
 - add field reverse mapping;
+- add hints and autocompletion in settings file;
 - parameters for method map;
 - remove the need to specify the full class name;
 - simplify the interface for simple cases;
