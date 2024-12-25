@@ -67,3 +67,13 @@ Key Features:
 Methods for mapping objects are generated according to the following rule
 **map** + *short source class name* + **to** + *short target class name*
 An example of mapping with nested objects can be seen in `org.mapper.generator.CafeResponse -> org.mapper.generator.Cafe`
+
+###Plans
+
+What needs to be done
+
+- parameters for method map;
+- remove the need to specify the full class name;
+- simplify the interface for simple cases;
+- on UI add a button to open the generated object;
+- adapt to multi-module project;
