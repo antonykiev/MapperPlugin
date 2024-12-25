@@ -1,26 +1,22 @@
 package org.mapper.generator.mapperplugin.presentation.ui
 
 import com.intellij.collaboration.ui.util.name
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.TreeClassChooserFactory
 import com.intellij.ide.util.TreeFileChooserFactory
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.mapper.generator.mapperplugin.data.states.MappingSettings
 import java.awt.BorderLayout
 import java.awt.Color
-import java.awt.Dimension
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
@@ -33,11 +29,12 @@ class MapperDialog(
 ) : DialogWrapper(project) {
 
     private val sourceClassField = JBTextField().apply {
-        text = event.getData(CommonDataKeys.PSI_FILE)?.findDescendantOfType<KtClass>()?.kotlinFqName?.asString() ?: ""
+        text =
+            event.getData(CommonDataKeys.PSI_FILE)?.findDescendantOfType<KtClass>()?.kotlinFqName?.asString().orEmpty()
     }
     private val targetClassField = JBTextField()
     private val targetFileField = JBTextField().apply {
-        text = event.getData(CommonDataKeys.PSI_FILE)?.name ?: ""
+        text = event.getData(CommonDataKeys.PSI_FILE)?.name.orEmpty()
     }
     private val extensionFunctionRadio = JRadioButton(EXTENSION_FUNCTION, true)
     private val globalFunctionRadio = JRadioButton(GLOBAL_FUNCTION)
@@ -48,6 +45,7 @@ class MapperDialog(
     }
 
     override fun createCenterPanel(): JComponent {
+
         val mainPanel = JPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
         }
@@ -82,36 +80,15 @@ class MapperDialog(
             add(globalFunctionRadio)
         }
 
-        val myAction: AnAction = object : AnAction(OPEN_SETTINGS_ACTION) {
-            override fun actionPerformed(e: AnActionEvent) {
-                openSettingsPanel()
-            }
-        }
-        val presentation = Presentation(CUSTOMIZE_SETTINGS).apply {
-            setIcon(AllIcons.General.Settings)
-        }
-        val actionButton = ActionButton(myAction, presentation, ActionPlaces.UNKNOWN, Dimension(40, 40)).marginRight(20)
-
-        val settingsRatingRow = JPanel(BorderLayout()).apply {
-            add(actionButton, BorderLayout.WEST)
-            add(JBLabel(LIKE_THIS, SwingConstants.CENTER), BorderLayout.CENTER)
-            add(ActionLink(MY_GITHUB_URL) {
-                BrowserUtil.browse(MY_GITHUB_URL)
-            }, BorderLayout.EAST)
-            marginTop(8)
-        }
-
         sourceClassField.document.onUpdate(::updateOkButtonState)
         targetClassField.document.onUpdate(::updateOkButtonState)
         targetFileField.document.onUpdate(::updateOkButtonState)
 
-        // Add all components to the main panel
         mainPanel.add(sourcePanel)
         mainPanel.add(targetPanel)
         mainPanel.add(targetFilePanel)
         mainPanel.add(Box.createVerticalStrut(8))
         mainPanel.add(functionTypePanel)
-        mainPanel.add(settingsRatingRow)
 
         okAction.isEnabled = false
         okAction.name = GENERATE
@@ -119,20 +96,29 @@ class MapperDialog(
         return mainPanel
     }
 
+    fun mappingSetting(): MappingSettings {
+        return MappingSettings(
+            sourceClassField.text,
+            targetClassField.text,
+            targetFileField.text,
+            extensionFunctionRadio.isSelected
+        )
+    }
+
     private fun createSelectClassButton(classField: JBTextField, dialogTitle: String): JButton {
-        return JButton("...").apply {
+        return JButton(ELLIPSIS).apply {
             addActionListener {
                 val classChooser = TreeClassChooserFactory.getInstance(project)
-                    .createAllProjectScopeChooser(dialogTitle) // todo: Search for kotlin data classes only
+                    .createAllProjectScopeChooser(dialogTitle)
                 classChooser.showDialog()
                 val selectedClass = classChooser.selected
-                classField.text = selectedClass?.qualifiedName ?: ""
+                classField.text = selectedClass?.qualifiedName.orEmpty()
             }
         }
     }
 
     private fun createSelectFileButton(fileField: JBTextField, dialogTitle: String): JButton {
-        return JButton("...").apply {
+        return JButton(ELLIPSIS).apply {
             addActionListener {
                 val fileChooser = TreeFileChooserFactory.getInstance(project).createFileChooser(
                     dialogTitle, null,
@@ -140,30 +126,12 @@ class MapperDialog(
                 )
                 fileChooser.showDialog()
                 val selectedFile = fileChooser.selectedFile
-                fileField.text = selectedFile?.name ?: ""
+                fileField.text = selectedFile?.name.orEmpty()
             }
         }
     }
 
-    fun getSelectedClasses(): Pair<String?, String?> {
-        return Pair(sourceClassField.text, targetClassField.text)
-    }
-
-    fun getSelectedFileName(): String? {
-        return targetFileField.text
-    }
-
-    fun isExtensionFunctionSelected(): Boolean {
-        return extensionFunctionRadio.isSelected
-    }
-
-    fun openSettingsPanel() {
-//        ShowSettingsUtil.getInstance().showSettingsDialog(
-//            null,  // Pass the current project if needed
-//            AppSettingsConfigurable::class.java
-//        )
-    }
-
+    //refactor to observable
     private fun updateOkButtonState(e: DocumentEvent?) {
         val allFieldsFilled =
             sourceClassField.text.isNotEmpty() && targetClassField.text.isNotEmpty() && targetFileField.text.isNotEmpty()
@@ -171,7 +139,6 @@ class MapperDialog(
     }
 
     companion object Constant {
-        private const val MY_GITHUB_URL = "https://github.com/antonykiev/MapperPlugin"
         private const val GENERATE_MAPPING_FUNCTION = "Generate Mapping Function"
         private const val EXTENSION_FUNCTION = "Extension Function"
         private const val GLOBAL_FUNCTION = "Global Function"
@@ -186,6 +153,8 @@ class MapperDialog(
         private const val CUSTOMIZE_SETTINGS = "Customize Settings"
         private const val LIKE_THIS = "Like this version? Please star here: "
         private const val GENERATE = "Generate"
+        private const val ELLIPSIS = "..."
+
     }
 }
 
