@@ -63,3 +63,7 @@ Key Features:
 
 **details** *(optional)* - here is specified custom field mapping. Here are specified any specific rules for mapping;
 
+### Naming of mapping methods and mapping of nested objects
+Methods for mapping objects are generated according to the following rule
+**map** + *short source class name* + **to** + *short target class name*
+An example of mapping with nested objects can be seen in `org.mapper.generator.CafeResponse -> org.mapper.generator.Cafe`
