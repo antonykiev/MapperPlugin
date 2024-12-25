@@ -72,6 +72,7 @@ An example of mapping with nested objects can be seen in `org.mapper.generator.C
 
 What needs to be done
 
+- add fields validations;
 - parameters for method map;
 - remove the need to specify the full class name;
 - simplify the interface for simple cases;
