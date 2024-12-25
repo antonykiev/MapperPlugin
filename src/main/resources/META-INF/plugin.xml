@@ -1,13 +1,5 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <actions>
-        <action id="org.mapper.generator.mapperplugin.presentation.MapperAction"
-                class="org.mapper.generator.mapperplugin.presentation.MapperAction"
-                text="Generate Mappers"
-                description="Set up and generate class Mapper">
-            <add-to-group group-id="CodeMenu" anchor="last"/>
-        </action>
-    </actions>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>org.mapper.generator.MapperPlugin</id>
 
@@ -60,11 +52,10 @@
         <supportsKotlinPluginMode compilerMode="K2"/>
     </extensions>
     <actions>
-        <action id="org.mapper.generator.mapperplugin.presentation.MapperAction"
-                class="org.mapper.generator.mapperplugin.presentation.MapperAction"
-                text="Demo Plugin" description="Demo Plugin ">
-            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt SLASH"/>
+        <action id="GenerateMapperAction" class="org.mapper.generator.mapperplugin.presentation.PopUpMenuAction"
+                text="Generate Mapper"
+                description="Automatically generates a function or class to map one class to another">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </action>
     </actions>
-    <idea-version since-build="213" until-build="999.*"/>
 </idea-plugin>
