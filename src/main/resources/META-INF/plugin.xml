@@ -46,7 +46,11 @@
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
-    <extensions defaultExtensionNs="com.intellij"></extensions>
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="MapCraft"
+                           displayType="BALLOON"
+                           key="notification.group.MapperPlugin.success"/>
+    </extensions>
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
         <supportsKotlinPluginMode compilerMode="K1"/>
         <supportsKotlinPluginMode compilerMode="K2"/>
@@ -58,4 +62,5 @@
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </action>
     </actions>
+    <resource-bundle>Bundle</resource-bundle>
 </idea-plugin>

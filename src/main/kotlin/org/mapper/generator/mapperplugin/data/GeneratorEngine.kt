@@ -70,7 +70,7 @@ class GeneratorEngine(
                 appendGeneratedCode(project, settings.targetClassName, sourceClass, targetClass, targetFile, stringBuilder)
             } finally {
                 NotificationGroupManager.getInstance()
-                    .getNotificationGroup("Kotlin Data Mapper")
+                    .getNotificationGroup("MapCraft")
                     .createNotification("Mapping function generated", NotificationType.INFORMATION)
                     .notify(project)
             }
