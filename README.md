@@ -15,8 +15,9 @@ Key Features:
 ### Example of integration into the project
 
 - install plugin
-- create setting json file (where the file is located and file name
+- create setting `json` file (where the file is located and file name
   does not matter)
+- fill in the full path of `json` file and press **OK**
 - go to **Code -> Generate Mappers**
 - wait a couple of seconds because IDE  does not immediately update the files in project
   For example mapper_instruction.json
