@@ -16,7 +16,7 @@
     <name>MapCraft</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor email="1mailanton@gmail.com" >Shcherbakov Anton</vendor>
+    <vendor email="1mailanton@gmail.com">Shcherbakov Anton</vendor>
 
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
@@ -49,19 +49,22 @@
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
-<!--    <depends>org.jetbrains.android</depends>-->
     <depends>org.jetbrains.kotlin</depends>
     <depends>com.intellij.modules.java</depends>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
-    <extensions defaultExtensionNs="com.intellij">
-
+    <extensions defaultExtensionNs="com.intellij"></extensions>
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <supportsKotlinPluginMode compilerMode="K1"/>
+        <supportsKotlinPluginMode compilerMode="K2"/>
     </extensions>
     <actions>
-        <action id="org.mapper.generator.mapperplugin.presentation.MapperAction" class="org.mapper.generator.mapperplugin.presentation.MapperAction"
+        <action id="org.mapper.generator.mapperplugin.presentation.MapperAction"
+                class="org.mapper.generator.mapperplugin.presentation.MapperAction"
                 text="Demo Plugin" description="Demo Plugin ">
             <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt SLASH"/>
         </action>
     </actions>
+    <idea-version since-build="213" until-build="999.*"/>
 </idea-plugin>

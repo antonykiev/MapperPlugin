@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.mapper.generator"
-version = "0.1-SNAPSHOT"
+version = "0.2.9-SNAPSHOT"
 
 val KotlinPoetVersion = "2.0.0"
 val GsonVersion = "2.8.9"
@@ -17,7 +17,7 @@ repositories {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("2024.1.7")
+    version.set("2024.3.1.1")
     type.set("IC") // Target IDE Platform
 
     plugins.set(
@@ -50,6 +50,9 @@ tasks {
 
     publishPlugin {
         token.set(System.getenv("PUBLISH_TOKEN"))
+    }
+    buildSearchableOptions {
+        enabled = false
     }
 }
 
