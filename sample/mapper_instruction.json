@@ -1,0 +1,33 @@
+{
+  "outputDir": "src",
+  "mapperName": "mapper.CustomMapper",
+  "mappingRules": {
+    "org.mapper.generator.PersonResponse": {
+      "target": "org.mapper.generator.Person"
+    },
+    "org.mapper.generator.GroupResponse": {
+      "target": "org.mapper.generator.Group",
+      "details": [
+        "id = source.id.toInt()"
+      ]
+    },
+    "org.mapper.generator.Person": {
+      "target": "org.mapper.generator.PersonResponse"
+    },
+    "org.mapper.generator.Group": {
+      "target": "org.mapper.generator.GroupResponse",
+      "details": [
+        "id = source.id.toLong()"
+      ]
+    },
+    "org.mapper.generator.ManagerResponse": {
+      "target": "org.mapper.generator.Manager"
+    },
+    "org.mapper.generator.CafeResponse": {
+      "target": "org.mapper.generator.Cafe",
+      "details": [
+        "manager = mapManagerResponseToManager(source.manager)"
+      ]
+    }
+  }
+}
