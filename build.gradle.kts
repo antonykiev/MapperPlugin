@@ -4,7 +4,6 @@ plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "2.1.0"
     id("org.jetbrains.intellij.platform")
-    id("org.jetbrains.changelog") version "2.2.1"
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -55,11 +54,6 @@ intellijPlatform {
     }
 }
 
-changelog {
-    groups.empty()
-    repositoryUrl = providers.gradleProperty("pluginRepositoryUrl")
-}
-
 tasks {
     withType<JavaCompile> {
         sourceCompatibility = "17"
@@ -75,22 +69,8 @@ tasks {
     patchPluginXml {
         sinceBuild = providers.gradleProperty("pluginSinceBuild")
         untilBuild = provider { null }
-
-//        changeNotes.set(provider {
-//            val version = project.version.toString() // Get the version from the project
-//            val changelogItem = changelog.get(version) // Get the changelog item for that version
-//            val rendered = changelog.renderItem(
-//                changelogItem,
-//                Changelog.OutputType.HTML
-//            )
-//            println("Rendered Change Notes: $rendered")
-//            rendered
-//        })
     }
 
-    publishPlugin {
-        dependsOn(patchChangelog)
-    }
     buildSearchableOptions {
         enabled = false
     }
