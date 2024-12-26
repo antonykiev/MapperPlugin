@@ -13,9 +13,6 @@ val kotlinPoetVersion = "2.0.0"
 val gsonVersion = "2.8.9"
 dependencies {
 
-    implementation("com.squareup:kotlinpoet:$kotlinPoetVersion")
-    implementation("com.google.code.gson:gson:$gsonVersion")
-
     intellijPlatform {
 //        intellijIdeaCommunity("2024.3.1.1")
         local("C:\\Program Files\\JetBrains\\IntelliJ IDEA Community Edition 2024.3.1")

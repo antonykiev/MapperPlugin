@@ -39,7 +39,7 @@ class GeneratorEngine(
         val targetClass = findPsiClassUseCase(settings.targetClassName)
 
         if (sourceClass != null && targetClass != null) {
-            val prefix = if (settings.isExtensionFunc) "this" else sourceClass.name!!.lowercase()
+            val prefix = if (settings.isExtensionFunc) "this" else sourceClass.name!!.toLowerCaseFirstChar()
             val targetFile = findKtFileUseCase.invoke(settings.selectedFileName)
                 ?: (sourceClass as KtLightClassForSourceDeclaration).kotlinOrigin.containingKtFile
 
@@ -56,7 +56,7 @@ class GeneratorEngine(
                 )
                 stringBuilder.append(")}")
             } else {
-                stringBuilder.append("fun ${sourceClass.name}To${targetClass.name}(${sourceClass.name?.lowercase()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
+                stringBuilder.append("fun ${sourceClass.name}To${targetClass.name}(${sourceClass.name?.toLowerCaseFirstChar()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
                 build(
                     project = project,
                     sourceClass = targetClass,
@@ -168,4 +168,10 @@ class GeneratorEngine(
     }
 
     private fun PsiType.asPsiClass(): PsiClass? = PsiUtil.resolveClassInType(this)
+
+    private fun String.toLowerCaseFirstChar(): String {
+        if (this.isEmpty())
+            return this
+        return this[0].lowercaseChar() + this.substring(1)
+    }
 }
