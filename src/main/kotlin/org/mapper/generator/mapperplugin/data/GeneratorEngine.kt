@@ -1,100 +1,177 @@
 package org.mapper.generator.mapperplugin.data
 
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.TypeSpec
-import org.mapper.generator.mapperplugin.buisness.generation.*
-import org.mapper.generator.mapperplugin.buisness.states.ClassMetadata
-import org.mapper.generator.mapperplugin.buisness.states.Detail
-import org.mapper.generator.mapperplugin.buisness.states.MappingSettings
-import java.io.File
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiUtil
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
+import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.psi.imports.addImport
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.mapper.generator.mapperplugin.buisness.FindKtFileUseCase
+import org.mapper.generator.mapperplugin.buisness.FindPsiClassUseCase
+import org.mapper.generator.mapperplugin.data.states.MappingSettings
 
 class GeneratorEngine(
-    private val mappingSettings: MappingSettings
+    private val project: Project,
+    private val settings: MappingSettings
 ) {
 
-    private val nestedMappingValidator = NestedMappingValidator()
-    private val createMethodNameUseCase = CreateMethodNameUseCase()
-    private val getPackageUseClass = GetPackageFromFullNameUseClass()
-    private val getClassNameFromFullNameUseCase = GetClassNameFromFullNameUseCase()
-    private val createStatementUseCase = CreateStatementUseCase()
-    private val successMessageUseCase = SuccessMessageUseCase()
+    private val findPsiClassUseCase = FindPsiClassUseCase(project)
+    private val findKtFileUseCase = FindKtFileUseCase(project)
+
+    private val stringBuilder = StringBuilder()
 
     fun run(): Result<String> {
-        return runCatching {
-            nestedMappingValidator.invoke(mappingSettings.mappingRules)
+        stringBuilder.clear()
+        val sourceClass = findPsiClassUseCase.invoke(settings.sourceClassName)
+        val targetClass = findPsiClassUseCase(settings.targetClassName)
 
-            val functionList = mappingSettings.mappingRules
-                .map {
-                    createFunSpec(
-                        sourceClassMetaData = it.sourceClassMetaData,
-                        targetClassMetaData = it.detail
-                    )
-                }
+        if (sourceClass != null && targetClass != null) {
+            val prefix = if (settings.isExtensionFunc) "this" else sourceClass.name!!.toLowerCaseFirstChar()
+            val targetFile = findKtFileUseCase.invoke(settings.selectedFileName)
+                ?: (sourceClass as KtLightClassForSourceDeclaration).kotlinOrigin.containingKtFile
 
-            val mapperClass: TypeSpec = createMapperSpec(functionList)
-            val fileSpec: FileSpec = createFileSpec(mapperClass)
-            writeMapperToFile(fileSpec)
-            return@runCatching Result.success(successMessageUseCase.invoke(fileSpec))
-        }.getOrElse {
-            return@getOrElse Result.failure(it)
+            if (settings.isExtensionFunc) {
+                stringBuilder.append("fun ${sourceClass.name}.to${targetClass.name}(): ${targetClass.name} { return ${targetClass.name}(")
+                build(
+                    project = project,
+                    sourceClass = targetClass,
+                    targetClass = sourceClass,
+                    parentChainName = "",
+                    targetFile = targetFile,
+                    stringBuilder = stringBuilder,
+                    prefix = prefix
+                )
+                stringBuilder.append(")}")
+            } else {
+                stringBuilder.append("fun ${sourceClass.name}To${targetClass.name}(${sourceClass.name?.toLowerCaseFirstChar()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
+                build(
+                    project = project,
+                    sourceClass = targetClass,
+                    targetClass = sourceClass,
+                    parentChainName = "",targetFile = targetFile,
+                    stringBuilder = stringBuilder,
+                    prefix = prefix)
+                stringBuilder.append(")}")
+            }
+            try {
+                appendGeneratedCode(project, settings.targetClassName, sourceClass, targetClass, targetFile, stringBuilder)
+            } finally {
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup("MapCraft")
+                    .createNotification("Mapping function generated", NotificationType.INFORMATION)
+                    .notify(project)
+            }
+
+        }
+        return Result.success("")
+    }
+
+    private fun appendGeneratedCode(
+        project: Project,
+        selectedFileName: String?,
+        sourceClass: PsiClass,
+        targetClass: PsiClass,
+        targetFile: KtFile,
+        stringBuilder: StringBuilder
+    ) {
+        WriteCommandAction.runWriteCommandAction(project) {
+            val psiFactory = KtPsiFactory(project)
+
+            val containingFile = targetFile ?: findKtFileByName(project, selectedFileName)
+            ?: (sourceClass as KtLightClassForSourceDeclaration).kotlinOrigin.containingKtFile
+
+            containingFile.findDescendantOfType<KtFunction> {
+                it.name?.contains("to${targetClass.name}") ?: false && it.receiverTypeReference?.text == sourceClass.name
+            }?.apply {
+                delete()
+            }
+
+            val newFunction = psiFactory.createFunction(stringBuilder.toString())
+            containingFile.add(newFunction)
         }
     }
 
-    private fun createFunSpec(
-        sourceClassMetaData: ClassMetadata,
-        targetClassMetaData: Detail,
-    ): FunSpec {
+    private fun findKtFileByName(project: Project, fileName: String?): KtFile? {
+        fileName ?: return null
 
-        val sourceShortClassName = getClassNameFromFullNameUseCase.invoke(sourceClassMetaData.className)
-        val targetShortClassName = getClassNameFromFullNameUseCase.invoke(targetClassMetaData.targetMetaData.className)
+        val ktExtension = KotlinFileType.INSTANCE.defaultExtension
+        val ktFile: KtFile? =
+            FilenameIndex.getVirtualFilesByName(fileName, GlobalSearchScope.allScope(project)).find { virtualFile ->
+                virtualFile.extension == ktExtension && virtualFile.toPsiFile(project) is KtFile
+            }?.toPsiFile(project) as KtFile?
 
-        val methodName = createMethodNameUseCase.invoke(sourceShortClassName, targetShortClassName)
-
-        val sourcePackageName = getPackageUseClass.invoke(sourceClassMetaData.className, sourceClassMetaData.className)
-        val targetPackageName = getPackageUseClass.invoke(targetClassMetaData.targetMetaData.className, targetClassMetaData.targetMetaData.className)
-
-        val statement = createStatementUseCase.invoke(
-            sourceProperties = sourceClassMetaData.properties.map { it.first },
-            detail = targetClassMetaData,
-        )
-
-        return FunSpec.builder(methodName)
-            .returns(ClassName(targetPackageName, targetShortClassName))
-            .addParameter("source", ClassName(sourcePackageName, sourceShortClassName))
-            .addStatement("return %T($statement)", ClassName(targetPackageName, targetShortClassName))
-            .build()
+        return ktFile
     }
 
-    private fun createMapperSpec(functionList: List<FunSpec>): TypeSpec {
-        val builder =
-            TypeSpec.objectBuilder(getClassNameFromFullNameUseCase.invoke(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_NAME })
-        functionList.forEach { builder.addFunction(it) }
-        return builder.build()
+    private fun build(
+        project: Project,
+        sourceClass: PsiClass,
+        targetClass: PsiClass,
+        parentChainName: String,
+        targetFile: KtFile,
+        stringBuilder: StringBuilder,
+        prefix: String
+    ) {
+        WriteCommandAction.runWriteCommandAction(project) {
+            sourceClass.kotlinFqName?.let { targetFile?.addImport(it, false, null, project) }
+        }
+
+        sourceClass.fields.forEach { sourceField ->
+            val targetField = targetClass.fields.find { it.name == sourceField.name }
+
+            if (sourceField.type.asPsiClass().isKotlinDataClass()) {
+                if (targetField == null || targetField.type.asPsiClass().isKotlinDataClass().not()) {
+                    stringBuilder.append("${sourceField.name} = null,")
+                } else {
+                    stringBuilder.append("${sourceField.name} = ${sourceField.type.asPsiClass()?.name}(")
+                    build(
+                        project = project,
+                        sourceClass = sourceField.type.asPsiClass()!!,
+                        targetClass = targetField.type.asPsiClass()!!,
+                        parentChainName = "$parentChainName.${sourceField.name}",
+                        targetFile = targetFile,
+                        stringBuilder = stringBuilder,
+                        prefix = prefix
+                    )
+                    stringBuilder.append(")")
+                }
+            } else {
+                if (targetField == null) {
+                    stringBuilder.append("${sourceField.name} = null,")
+                } else {
+                    stringBuilder.append("${sourceField.name} = ${prefix}${parentChainName}.${sourceField.name}" + ",")
+                }
+            }
+        }
     }
 
-    private fun createFileSpec(typeSpec: TypeSpec): FileSpec {
-        val packageName = getPackageUseClass(mappingSettings.mapperName, DEFAULT_MAPPER_PACKAGE)
-        val fileName = getClassNameFromFullNameUseCase(mappingSettings.mapperName).ifEmpty { DEFAULT_MAPPER_NAME }
-        return FileSpec.builder(
-            packageName = packageName,
-            fileName = fileName
-        )
-            .addType(typeSpec)
-            .build()
+    private fun PsiElement?.isKotlinDataClass(): Boolean {
+        this ?: return false
+
+        if (this is KtLightClassForSourceDeclaration) {
+            return kotlinOrigin.isData()
+        }
+        return false
     }
 
-    private fun writeMapperToFile(fileSpec: FileSpec) {
-        val outputDirectory = File(/* pathname = */ mappingSettings.projectBasePath + File.separator +
-                mappingSettings.outputDir.replace(".", File.separator)
-        )
-        outputDirectory.mkdirs()
-        fileSpec.writeTo(outputDirectory)
-    }
+    private fun PsiType.asPsiClass(): PsiClass? = PsiUtil.resolveClassInType(this)
 
-    companion object Constant {
-        const val DEFAULT_MAPPER_PACKAGE = "com.plugin.default"
-        const val DEFAULT_MAPPER_NAME = "Mapper"
+    private fun String.toLowerCaseFirstChar(): String {
+        if (this.isEmpty())
+            return this
+        return this[0].lowercaseChar() + this.substring(1)
     }
 }

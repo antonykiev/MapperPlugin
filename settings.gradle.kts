@@ -1,7 +1,20 @@
-pluginManagement {
+import org.jetbrains.intellij.platform.gradle.extensions.intellijPlatform
+
+plugins {
+    id("org.jetbrains.intellij.platform.settings") version "2.1.0"
+}
+
+dependencyResolutionManagement {
+    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+
     repositories {
         mavenCentral()
-        gradlePluginPortal()
+
+        intellijPlatform {
+            defaultRepositories()
+            jetbrainsRuntime()
+            intellijDependencies()
+        }
     }
 }
 

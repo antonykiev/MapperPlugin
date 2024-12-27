@@ -1,9 +1,0 @@
-{
-  "outputDir": "app.src.main.java",
-  "mapperName": "com.example.mapping.GeneratedMapper",
-  "mappingRules": {
-    "com.example.mapping.data.UserResponse": {
-      "target": "com.example.mapping.data.User"
-    }
-  }
-}

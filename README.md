@@ -1,83 +1,59 @@
 
-# MapCraft plugin for mapping object
+# **MapCraft** plugin for mapping object
+
+[![Android Studio Plugin](https://img.shields.io/badge/plugin-AndroidStudio-green.svg)](https://plugins.jetbrains.com/plugin/26185-mapcraft)
+[![IntelliJ Idea Plugin](https://img.shields.io/badge/plugin-IntelliJ%20%20Idea-purple.svg)](https://plugins.jetbrains.com/plugin/26185-mapcraft)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/26185-mapcraft.svg)](https://plugins.jetbrains.com/plugin/26185-mapcraft)
+[![Version](https://img.shields.io/jetbrains/plugin/v/26185.svg?label=version)](https://plugins.jetbrains.com/plugin/26185-mapcraft)
 
 ### Description
-MapCraft is a new IntelliJ Idea and Android Studio plugin designed to streamline the process of generating mapping code for your projects. With MapCraft, you can automate the creation of mapping functions, reducing boilerplate and saving development time.
 
+The MapCraft plugin is a productivity tool for IntelliJ IDEA and Android Studio designed to streamline the creation of object-to-object mappers in your Kotlin or Java projects. Whether you need to map between DTOs, entities, models, or custom objects, this plugin automates the tedious process of writing boilerplate mapping code.
 Key Features:
-- does not affect build speed of project. Generated once and forgotten;
-- simplifies the generation of mappers for data transformation;
-- designed to work seamlessly with Kotlin and Java projects;
-- lightweight and easy to integrate into your workflow;
 
-***Note***: *This plugin is currently in an unstable version, meaning it may have bugs or limited functionality. I am actively improving it, and your feedback is invaluable to me.*
+- Automatic Mapper Generation: Generate mapper functions with just a few clicks.
+- Easy-to-Use UI: A user-friendly interface for selecting source and target     objects and fine-tuning the mappings.
 
-### Example of integration into the project
+Benefits:
 
-- install plugin
-- create setting `json` file (where the file is located and file name
-  does not matter)
-- fill in the full path of `json` file and press **OK**
-- go to **Code -> Generate Mappers**
-- wait a couple of seconds because IDE  does not immediately update the files in project
-  For example mapper_instruction.json
-```json
-{
-  "outputDir": "src",
-  "mapperName": "mapper.CustomMapper",
-  "mappingRules": {
-    "org.mapper.generator.PersonResponse": {
-      "target": "org.mapper.generator.Person"
-    },
-    "org.mapper.generator.GroupResponse": {
-      "target": "org.mapper.generator.Group",
-      "details": [
-        "id = source.id.toInt()"
-      ]
-    },
-    "org.mapper.generator.Person": {
-      "target": "org.mapper.generator.PersonResponse"
-    },
-    "org.mapper.generator.Group": {
-      "target": "org.mapper.generator.GroupResponse",
-      "details": [
-        "id = source.id.toLong()"
-      ]
-    },
-    "org.mapper.generator.ManagerResponse": {
-      "target": "org.mapper.generator.Manager"
-    },
-    "org.mapper.generator.CafeResponse": {
-      "target": "org.mapper.generator.Cafe",
-      "details": [
-        "manager = mapManagerResponseToManager(source.manager)"
-      ]
-    }
-  }
-}
-```
-**outputDir** *(optional)* - is the full path to the folder for generating the mapper. If the field is not specified, the mapper file will be generated at **`com.plugin.default`** directory;
+- Save time and reduce boilerplate when working with complex models.
+- Automatic mapping of nested classes.
+- Improve code quality by eliminating human errors in manual mapping.
+- Focus on business logic rather than repetitive tasks.
 
-**mapperName** *(optional)* - is the full name of your mapper. If the field is not specified, the mapper file name will be generated with **`Mapper`** name;
+Ideal For:
 
-**mappingRules** *(mandatory)* - in this block is configured source object and target object also with full names. In the example above it is stated that **`org.mapper.generator.PersonResponse`** (source) will be mapped to **`org.mapper.generator.Person`** (target);
+- Backend developers working with data transformation layers.
+- Android developers mapping between network, domain, and UI models.
+- Any developer tired of writing repetitive mapper code manually.    
 
-**details** *(optional)* - here is specified custom field mapping. Here are specified any specific rules for mapping;
+Boost your development efficiency and eliminate mapping headaches with MapCraft!
 
-### Naming of mapping methods and mapping of nested objects
-Methods for mapping objects are generated according to the following rule
-**map** + *short source class name* + **to** + *short target class name*
-An example of mapping with nested objects can be seen in `org.mapper.generator.CafeResponse -> org.mapper.generator.Cafe`
+### How to install
 
-###Plans
+Go File -> Settings -> Plugins -> Enter in search field MapCraft -> Install
 
-What needs to be done
+### Supported IDE
 
-- add fields validations;
-- add field reverse mapping;
-- add hints and autocompletion in settings file;
-- parameters for method map;
-- remove the need to specify the full class name;
-- simplify the interface for simple cases;
-- on UI add a button to open the generated object;
-- adapt to multi-module project;
+Supported Products
+Android Studio — Android Studio Ladybug  2024.2.1, Jellyfish | 2023.3.1+
+Aqua — 2024.1.1+
+IntelliJ IDEA Community — 2023.3+
+IntelliJ IDEA Ultimate — 2023.3+
+
+### How to use
+
+Let's say you have data classes
+[![Alt Text](images/step1.png)
+
+Right click on the class you want to be source of mapping. And push button  Generate Mapper
+[![Alt Text](images/step2.png)
+
+Push button ellipsis to select target class
+[![Alt Text](images/step3.png)
+
+Select target class
+[![Alt Text](images/step4.png)
+
+You can see generated function 
+[![Alt Text](images/step5.png)
