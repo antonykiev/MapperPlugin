@@ -44,16 +44,21 @@ IntelliJ IDEA Ultimate — 2023.3+
 ### How to use
 
 Let's say you have data classes
-[![Alt Text](images/step1.png)
+
+<img src="images/step1.png" alt="Alt Text" width="400">
 
 Right click on the class you want to be source of mapping. And push button  Generate Mapper
-[![Alt Text](images/step2.png)
+
+<img src="images/step2.png" alt="Alt Text" width="400">
 
 Push button ellipsis to select target class
-[![Alt Text](images/step3.png)
+
+<img src="images/step3.png" alt="Alt Text" width="400">
 
 Select target class
-[![Alt Text](images/step4.png)
 
-You can see generated function 
-[![Alt Text](images/step5.png)
+<img src="images/step4.png" alt="Alt Text" width="400">
+
+You can see generated function
+
+<img src="images/step5.png" alt="Alt Text" width="400">
