@@ -55,7 +55,6 @@ class MapperDialog(
     }
 
     override fun createCenterPanel(): JComponent {
-
         val mainPanel = JPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
         }
@@ -175,7 +174,6 @@ class MapperDialog(
         descriptor.description = SELECT_FOLDER_DESCRIPTION
 
         val selectedFolder: VirtualFile? = FileChooser.chooseFile(descriptor, project, null)
-
         fileField.text = selectedFolder?.path.orEmpty()
     }
 
@@ -189,6 +187,15 @@ class MapperDialog(
         fileField.text = selectedFile?.name.orEmpty()
     }
 
+    private fun Document.onUpdate(action: (DocumentEvent?) -> Unit) {
+        addDocumentListener(
+            /* listener = */ object : DocumentListener {
+                override fun insertUpdate(e: DocumentEvent?) = action(e)
+                override fun removeUpdate(e: DocumentEvent?) = action(e)
+                override fun changedUpdate(e: DocumentEvent?) = action(e)
+            }
+        )
+    }
 
     companion object Constant {
         private const val GENERATE_MAPPING_FUNCTION = "Generate Mapping Function"
@@ -203,22 +210,9 @@ class MapperDialog(
         private const val SELECT_MAPPER_FUNCTION_FILE = "Select Mapper Function File"
         private const val FUNCTION_TYPE = "Function Type"
         private const val TO = "To :     "
-        private const val OPEN_SETTINGS_ACTION = "Open Settings Action"
-        private const val CUSTOMIZE_SETTINGS = "Customize Settings"
-        private const val LIKE_THIS = "Like this version? Please star here: "
         private const val GENERATE = "Generate"
         private const val ELLIPSIS = "..."
         private const val SELECT_FOLDER = "Select Folder"
         private const val SELECT_FOLDER_DESCRIPTION = "Please select a folder."
     }
-}
-
-fun Document.onUpdate(action: (DocumentEvent?) -> Unit) {
-    addDocumentListener(
-        /* listener = */ object : DocumentListener {
-            override fun insertUpdate(e: DocumentEvent?) = action(e)
-            override fun removeUpdate(e: DocumentEvent?) = action(e)
-            override fun changedUpdate(e: DocumentEvent?) = action(e)
-        }
-    )
 }
