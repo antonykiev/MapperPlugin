@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.mapper.generator.mapperplugin.data.states.GenerationStrategy
 import org.mapper.generator.mapperplugin.data.states.MappingSettings
 import java.awt.BorderLayout
 import java.awt.Color
@@ -40,6 +41,7 @@ class MapperDialog(
     private val sourceClassField = JBTextField()
     private val targetClassField = JBTextField()
     private val targetFileField = JBTextField()
+
     private val extensionFunctionRadio = JRadioButton(EXTENSION_FUNCTION, true)
     private val globalFunctionRadio = JRadioButton(GLOBAL_FUNCTION)
     private val classRadio = JRadioButton(SEPARATE_CLASS)
@@ -126,10 +128,15 @@ class MapperDialog(
 
     fun mappingSetting(): MappingSettings {
         return MappingSettings(
-            sourceClassField.text,
-            targetClassField.text,
-            targetFileField.text,
-            extensionFunctionRadio.isSelected
+            sourceClassName = sourceClassField.text,
+            targetClassName = targetClassField.text,
+            selectedFileName = targetFileField.text,
+            generationStrategy = when {
+                extensionFunctionRadio.isSelected -> GenerationStrategy.EXTENSION_FUNCTION
+                globalFunctionRadio.isSelected -> GenerationStrategy.GLOBAL_FUNCTION
+                classRadio.isSelected -> GenerationStrategy.OBJECT
+                else -> GenerationStrategy.OBJECT
+            }
         )
     }
 
