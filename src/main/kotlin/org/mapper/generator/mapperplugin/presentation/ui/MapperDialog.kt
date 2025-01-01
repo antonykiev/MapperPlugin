@@ -5,8 +5,11 @@ import com.intellij.ide.util.TreeClassChooserFactory
 import com.intellij.ide.util.TreeFileChooserFactory
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
@@ -17,6 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.mapper.generator.mapperplugin.data.states.MappingSettings
 import java.awt.BorderLayout
 import java.awt.Color
+import java.awt.event.ItemEvent
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
@@ -25,12 +29,15 @@ import javax.swing.text.Document
 
 class MapperDialog(
     private val project: Project,
-    event: AnActionEvent
+    private val event: AnActionEvent
 ) : DialogWrapper(project) {
 
     private val sourceClassField = JBTextField().apply {
-        text =
-            event.getData(CommonDataKeys.PSI_FILE)?.findDescendantOfType<KtClass>()?.kotlinFqName?.asString().orEmpty()
+        text = event.getData(CommonDataKeys.PSI_FILE)
+            ?.findDescendantOfType<KtClass>()
+            ?.kotlinFqName
+            ?.asString()
+            .orEmpty()
     }
     private val targetClassField = JBTextField()
     private val targetFileField = JBTextField().apply {
@@ -38,6 +45,9 @@ class MapperDialog(
     }
     private val extensionFunctionRadio = JRadioButton(EXTENSION_FUNCTION, true)
     private val globalFunctionRadio = JRadioButton(GLOBAL_FUNCTION)
+    private val classRadio = JRadioButton(SEPARATE_CLASS)
+
+    private val generateInLabel = JBLabel(GENERATE_IN_FILE, SwingConstants.LEFT)
 
     init {
         title = GENERATE_MAPPING_FUNCTION
@@ -63,9 +73,19 @@ class MapperDialog(
         }
 
         val targetFilePanel = JPanel(BorderLayout()).apply {
-            add(JBLabel(GENERATE_IN, SwingConstants.LEFT), BorderLayout.WEST)
+            add(generateInLabel, BorderLayout.WEST)
             add(targetFileField, BorderLayout.CENTER)
             add(createSelectFileButton(targetFileField, SELECT_MAPPER_FUNCTION_FILE), BorderLayout.EAST)
+        }
+
+        classRadio.addItemListener { e ->
+            if (e.stateChange == ItemEvent.SELECTED) {
+                targetFileField.text = ""
+                generateInLabel.text = GENERATE_IN_FOLDER
+            } else {
+                generateInLabel.text = GENERATE_IN_FILE
+                targetFileField.text = event.getData(CommonDataKeys.PSI_FILE)?.name.orEmpty()
+            }
         }
 
         val functionTypePanel = JPanel().apply {
@@ -73,11 +93,13 @@ class MapperDialog(
                 .apply { titleColor = JBColor(Color.BLACK, Color.WHITE) }
             add(extensionFunctionRadio)
             add(globalFunctionRadio)
+            add(classRadio)
         }
 
         ButtonGroup().apply {
             add(extensionFunctionRadio)
             add(globalFunctionRadio)
+            add(classRadio)
         }
 
         sourceClassField.document.onUpdate(::updateOkButtonState)
@@ -105,7 +127,10 @@ class MapperDialog(
         )
     }
 
-    private fun createSelectClassButton(classField: JBTextField, dialogTitle: String): JButton {
+    private fun createSelectClassButton(
+        classField: JBTextField,
+        dialogTitle: String
+    ): JButton {
         return JButton(ELLIPSIS).apply {
             addActionListener {
                 val classChooser = TreeClassChooserFactory.getInstance(project)
@@ -120,32 +145,61 @@ class MapperDialog(
     private fun createSelectFileButton(fileField: JBTextField, dialogTitle: String): JButton {
         return JButton(ELLIPSIS).apply {
             addActionListener {
-                val fileChooser = TreeFileChooserFactory.getInstance(project).createFileChooser(
-                    dialogTitle, null,
-                    KotlinFileType.INSTANCE, null,
-                )
-                fileChooser.showDialog()
-                val selectedFile = fileChooser.selectedFile
-                fileField.text = selectedFile?.name.orEmpty()
+                if (classRadio.isSelected) {
+                    showFolderChooser(fileField, dialogTitle)
+                } else {
+                    showFileChooser(fileField, dialogTitle)
+                }
             }
         }
     }
 
     //refactor to observable
     private fun updateOkButtonState(e: DocumentEvent?) {
-        val allFieldsFilled =
-            sourceClassField.text.isNotEmpty() && targetClassField.text.isNotEmpty() && targetFileField.text.isNotEmpty()
+        val allFieldsFilled = sourceClassField.text.isNotEmpty() &&
+                targetClassField.text.isNotEmpty() &&
+                targetFileField.text.isNotEmpty()
         okAction.isEnabled = allFieldsFilled
     }
+
+    private fun showFolderChooser(fileField: JBTextField, dialogTitle: String) {
+        val descriptor = FileChooserDescriptor(
+            /* chooseFiles = */ false,
+            /* chooseFolders = */ true,
+            /* chooseJars = */ false,
+            /* chooseJarsAsFiles = */ false,
+            /* chooseJarContents = */ false,
+            /* chooseMultiple = */ false
+        )
+        descriptor.title = SELECT_FOLDER
+        descriptor.description = SELECT_FOLDER_DESCRIPTION
+
+        val selectedFolder: VirtualFile? = FileChooser.chooseFile(descriptor, project, null)
+
+        fileField.text = selectedFolder?.path.orEmpty()
+    }
+
+    private fun showFileChooser(fileField: JBTextField, dialogTitle: String) {
+        val fileChooser = TreeFileChooserFactory.getInstance(project).createFileChooser(
+            dialogTitle, null,
+            KotlinFileType.INSTANCE, null,
+        )
+        fileChooser.showDialog()
+        val selectedFile = fileChooser.selectedFile
+        fileField.text = selectedFile?.name.orEmpty()
+    }
+
 
     companion object Constant {
         private const val GENERATE_MAPPING_FUNCTION = "Generate Mapping Function"
         private const val EXTENSION_FUNCTION = "Extension Function"
         private const val GLOBAL_FUNCTION = "Global Function"
+        private const val SEPARATE_CLASS = "Separate class"
         private const val SELECT_SOURCE_CLASS = "Select Source Class"
         private const val SELECT_TARGET_CLASS = "Select Target Class"
         private const val FROM = "From : "
-        private const val GENERATE_IN = "Generate in :   "
+        private const val GENERATE_IN_FOLDER = "Generate in folder:   "
+        private const val GENERATE_IN_FILE = "Generate in file:   "
         private const val SELECT_MAPPER_FUNCTION_FILE = "Select Mapper Function File"
         private const val FUNCTION_TYPE = "Function Type"
         private const val TO = "To :     "
@@ -154,14 +208,17 @@ class MapperDialog(
         private const val LIKE_THIS = "Like this version? Please star here: "
         private const val GENERATE = "Generate"
         private const val ELLIPSIS = "..."
-
+        private const val SELECT_FOLDER = "Select Folder"
+        private const val SELECT_FOLDER_DESCRIPTION = "Please select a folder."
     }
 }
 
 fun Document.onUpdate(action: (DocumentEvent?) -> Unit) {
-    addDocumentListener(object : DocumentListener {
-        override fun insertUpdate(e: DocumentEvent?) = action(e)
-        override fun removeUpdate(e: DocumentEvent?) = action(e)
-        override fun changedUpdate(e: DocumentEvent?) = action(e)
-    })
+    addDocumentListener(
+        /* listener = */ object : DocumentListener {
+            override fun insertUpdate(e: DocumentEvent?) = action(e)
+            override fun removeUpdate(e: DocumentEvent?) = action(e)
+            override fun changedUpdate(e: DocumentEvent?) = action(e)
+        }
+    )
 }
