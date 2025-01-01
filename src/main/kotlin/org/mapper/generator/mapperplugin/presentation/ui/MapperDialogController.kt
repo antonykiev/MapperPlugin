@@ -1,8 +1,15 @@
 package org.mapper.generator.mapperplugin.presentation.ui
 
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import org.mapper.generator.mapperplugin.presentation.ui.MapperDialog.Constant.GENERATE_IN_FILE
+import org.mapper.generator.mapperplugin.presentation.ui.MapperDialog.Constant.GENERATE_IN_FOLDER
 import kotlin.properties.Delegates
 
-class MapperDialogController(onUpdateState: (MapperDialogState) -> Unit) {
+class MapperDialogController(
+    private val onUpdateState: (MapperDialogState) -> Unit,
+    private val event: AnActionEvent
+) {
 
     private var sourceClassFieldSize = 0
     private var targetClassFieldSize = 0
@@ -11,7 +18,9 @@ class MapperDialogController(onUpdateState: (MapperDialogState) -> Unit) {
     private var state by Delegates.observable(
         initialValue = MapperDialogState(
             generateButtonEnabled = false,
-            generateStrategy = GenerateStrategy.FILE
+            generateStrategy = GenerateStrategy.FILE,
+            targetFileField = event.getData(CommonDataKeys.PSI_FILE)?.name.orEmpty(),
+            generateInLabel = GENERATE_IN_FILE
         )
     ) { _, _, new ->
         onUpdateState(new)
@@ -34,8 +43,12 @@ class MapperDialogController(onUpdateState: (MapperDialogState) -> Unit) {
         validateGenerateButtonState()
     }
 
-    fun onClassRadioUpdated(b: Boolean) {
-        state = state.copy(generateStrategy = if (b) GenerateStrategy.FOLDER else GenerateStrategy.FILE)
+    fun onClassRadioUpdated(isSelected: Boolean) {
+        state = state.copy(
+            generateStrategy = if (isSelected) GenerateStrategy.FOLDER else GenerateStrategy.FILE,
+            targetFileField = if (isSelected) "" else event.getData(CommonDataKeys.PSI_FILE)?.name.orEmpty(),
+            generateInLabel = if (isSelected) GENERATE_IN_FOLDER else GENERATE_IN_FILE
+        )
     }
 
     private fun validateGenerateButtonState() {

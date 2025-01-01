@@ -32,7 +32,10 @@ class MapperDialog(
     private val event: AnActionEvent
 ) : DialogWrapper(project) {
 
-    private val controller = MapperDialogController(::updateState)
+    private val controller = MapperDialogController(
+        onUpdateState = ::updateState,
+        event = event
+    )
 
     private val sourceClassField = JBTextField()
     private val targetClassField = JBTextField()
@@ -92,14 +95,6 @@ class MapperDialog(
         }
 
         classRadio.addItemListener { e ->
-            if (e.stateChange == ItemEvent.SELECTED) {
-                targetFileField.text = ""
-                generateInLabel.text = GENERATE_IN_FOLDER
-            } else {
-                generateInLabel.text = GENERATE_IN_FILE
-                targetFileField.text = event.getData(CommonDataKeys.PSI_FILE)?.name.orEmpty()
-            }
-
             controller.onClassRadioUpdated(e.stateChange == ItemEvent.SELECTED)
         }
 
@@ -138,18 +133,21 @@ class MapperDialog(
         )
     }
 
-    private fun updateState(new: MapperDialogState) {
-        okAction.isEnabled = new.generateButtonEnabled
+    private fun updateState(state: MapperDialogState) {
+        okAction.isEnabled = state.generateButtonEnabled
 
         createSelectFileButton.actionListeners.forEach {
             createSelectFileButton.removeActionListener(it)
         }
         createSelectFileButton.addActionListener {
-            when (new.generateStrategy) {
+            when (state.generateStrategy) {
                 GenerateStrategy.FILE -> showFileChooser(targetFileField, SELECT_MAPPER_FUNCTION_FILE)
                 GenerateStrategy.FOLDER -> showFolderChooser(targetFileField, SELECT_MAPPER_FUNCTION_FILE)
             }
         }
+
+        targetFileField.text = state.targetFileField
+        generateInLabel.text = state.generateInLabel
     }
 
     private fun createSelectClassButton(
@@ -211,8 +209,8 @@ class MapperDialog(
         private const val SELECT_SOURCE_CLASS = "Select Source Class"
         private const val SELECT_TARGET_CLASS = "Select Target Class"
         private const val FROM = "From : "
-        private const val GENERATE_IN_FOLDER = "Generate in folder:   "
-        private const val GENERATE_IN_FILE = "Generate in file:   "
+        internal const val GENERATE_IN_FOLDER = "Generate in folder:   "
+        internal const val GENERATE_IN_FILE = "Generate in file:   "
         private const val SELECT_MAPPER_FUNCTION_FILE = "Select Mapper Function File"
         private const val FUNCTION_TYPE = "Function Type"
         private const val TO = "To :     "
