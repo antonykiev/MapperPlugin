@@ -25,7 +25,6 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.text.Document
-import kotlin.properties.Delegates
 
 
 class MapperDialog(
@@ -43,6 +42,7 @@ class MapperDialog(
     private val classRadio = JRadioButton(SEPARATE_CLASS)
 
     private val generateInLabel = JBLabel(GENERATE_IN_FILE, SwingConstants.LEFT)
+    private val createSelectFileButton = JButton(ELLIPSIS)
 
     init {
         title = GENERATE_MAPPING_FUNCTION
@@ -61,10 +61,10 @@ class MapperDialog(
         }
 
         sourceClassField.text = event.getData(CommonDataKeys.PSI_FILE)
-                ?.findDescendantOfType<KtClass>()
-                ?.kotlinFqName
-                ?.asString()
-                .orEmpty()
+            ?.findDescendantOfType<KtClass>()
+            ?.kotlinFqName
+            ?.asString()
+            .orEmpty()
 
         targetFileField.text = event.getData(CommonDataKeys.PSI_FILE)?.name.orEmpty()
 
@@ -88,7 +88,7 @@ class MapperDialog(
         val targetFilePanel = JPanel(BorderLayout()).apply {
             add(generateInLabel, BorderLayout.WEST)
             add(targetFileField, BorderLayout.CENTER)
-            add(createSelectFileButton(targetFileField, SELECT_MAPPER_FUNCTION_FILE), BorderLayout.EAST)
+            add(createSelectFileButton, BorderLayout.EAST)
         }
 
         classRadio.addItemListener { e ->
@@ -99,6 +99,8 @@ class MapperDialog(
                 generateInLabel.text = GENERATE_IN_FILE
                 targetFileField.text = event.getData(CommonDataKeys.PSI_FILE)?.name.orEmpty()
             }
+
+            controller.onClassRadioUpdated(e.stateChange == ItemEvent.SELECTED)
         }
 
         val functionTypePanel = JPanel().apply {
@@ -138,6 +140,16 @@ class MapperDialog(
 
     private fun updateState(new: MapperDialogState) {
         okAction.isEnabled = new.generateButtonEnabled
+
+        createSelectFileButton.actionListeners.forEach {
+            createSelectFileButton.removeActionListener(it)
+        }
+        createSelectFileButton.addActionListener {
+            when (new.generateStrategy) {
+                GenerateStrategy.FILE -> showFileChooser(targetFileField, SELECT_MAPPER_FUNCTION_FILE)
+                GenerateStrategy.FOLDER -> showFolderChooser(targetFileField, SELECT_MAPPER_FUNCTION_FILE)
+            }
+        }
     }
 
     private fun createSelectClassButton(
@@ -151,18 +163,6 @@ class MapperDialog(
                 classChooser.showDialog()
                 val selectedClass = classChooser.selected
                 classField.text = selectedClass?.qualifiedName.orEmpty()
-            }
-        }
-    }
-
-    private fun createSelectFileButton(fileField: JBTextField, dialogTitle: String): JButton {
-        return JButton(ELLIPSIS).apply {
-            addActionListener {
-                if (classRadio.isSelected) {
-                    showFolderChooser(fileField, dialogTitle)
-                } else {
-                    showFileChooser(fileField, dialogTitle)
-                }
             }
         }
     }

@@ -10,7 +10,8 @@ class MapperDialogController(onUpdateState: (MapperDialogState) -> Unit) {
 
     private var state by Delegates.observable(
         initialValue = MapperDialogState(
-            generateButtonEnabled = false
+            generateButtonEnabled = false,
+            generateStrategy = GenerateStrategy.FILE
         )
     ) { _, _, new ->
         onUpdateState(new)
@@ -31,6 +32,10 @@ class MapperDialogController(onUpdateState: (MapperDialogState) -> Unit) {
     fun onUpdateTargetFileFieldSize(fieldSize: Int) {
         targetFileFieldSize = fieldSize
         validateGenerateButtonState()
+    }
+
+    fun onClassRadioUpdated(b: Boolean) {
+        state = state.copy(generateStrategy = if (b) GenerateStrategy.FOLDER else GenerateStrategy.FILE)
     }
 
     private fun validateGenerateButtonState() {
