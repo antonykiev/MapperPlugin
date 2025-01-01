@@ -1,6 +1,5 @@
 package org.mapper.generator.mapperplugin.data
 
-import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
@@ -21,6 +20,9 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.mapper.generator.mapperplugin.buisness.FindKtFileUseCase
 import org.mapper.generator.mapperplugin.buisness.FindPsiClassUseCase
+import org.mapper.generator.mapperplugin.buisness.LowerCaseStringUseCase
+import org.mapper.generator.mapperplugin.buisness.NotificationUseCase
+import org.mapper.generator.mapperplugin.data.states.GenerationStrategy
 import org.mapper.generator.mapperplugin.data.states.MappingSettings
 
 class GeneratorEngine(
@@ -30,6 +32,12 @@ class GeneratorEngine(
 
     private val findPsiClassUseCase = FindPsiClassUseCase(project)
     private val findKtFileUseCase = FindKtFileUseCase(project)
+    private val notificationUseCase = NotificationUseCase(
+        project = project,
+        groupName = "MapCraft",
+        content = "Mapping function generated",
+        type = NotificationType.INFORMATION
+    )
 
     private val stringBuilder = StringBuilder()
 
@@ -39,11 +47,15 @@ class GeneratorEngine(
         val targetClass = findPsiClassUseCase(settings.targetClassName)
 
         if (sourceClass != null && targetClass != null) {
-            val prefix = if (settings.isExtensionFunc) "this" else sourceClass.name!!.toLowerCaseFirstChar()
+            val prefix = if (settings.generationStrategy == GenerationStrategy.EXTENSION_FUNCTION)
+                "this"
+            else
+                LowerCaseStringUseCase(sourceClass.name.orEmpty()).invoke()
+
             val targetFile = findKtFileUseCase.invoke(settings.selectedFileName)
                 ?: (sourceClass as KtLightClassForSourceDeclaration).kotlinOrigin.containingKtFile
 
-            if (settings.isExtensionFunc) {
+            if (settings.generationStrategy == GenerationStrategy.EXTENSION_FUNCTION) {
                 stringBuilder.append("fun ${sourceClass.name}.to${targetClass.name}(): ${targetClass.name} { return ${targetClass.name}(")
                 build(
                     project = project,
@@ -56,23 +68,29 @@ class GeneratorEngine(
                 )
                 stringBuilder.append(")}")
             } else {
-                stringBuilder.append("fun ${sourceClass.name}To${targetClass.name}(${sourceClass.name?.toLowerCaseFirstChar()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
+
+                stringBuilder.append("fun ${sourceClass.name}To${targetClass.name}(${LowerCaseStringUseCase(sourceClass.name.orEmpty()).invoke()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
                 build(
                     project = project,
                     sourceClass = targetClass,
                     targetClass = sourceClass,
-                    parentChainName = "",targetFile = targetFile,
+                    parentChainName = "", targetFile = targetFile,
                     stringBuilder = stringBuilder,
-                    prefix = prefix)
+                    prefix = prefix
+                )
                 stringBuilder.append(")}")
             }
             try {
-                appendGeneratedCode(project, settings.targetClassName, sourceClass, targetClass, targetFile, stringBuilder)
+                appendGeneratedCode(
+                    project,
+                    settings.targetClassName,
+                    sourceClass,
+                    targetClass,
+                    targetFile,
+                    stringBuilder
+                )
             } finally {
-                NotificationGroupManager.getInstance()
-                    .getNotificationGroup("MapCraft")
-                    .createNotification("Mapping function generated", NotificationType.INFORMATION)
-                    .notify(project)
+                notificationUseCase.invoke()
             }
 
         }
@@ -168,10 +186,4 @@ class GeneratorEngine(
     }
 
     private fun PsiType.asPsiClass(): PsiClass? = PsiUtil.resolveClassInType(this)
-
-    private fun String.toLowerCaseFirstChar(): String {
-        if (this.isEmpty())
-            return this
-        return this[0].lowercaseChar() + this.substring(1)
-    }
 }
