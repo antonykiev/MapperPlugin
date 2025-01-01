@@ -25,6 +25,7 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.text.Document
+import kotlin.properties.Delegates
 
 
 class MapperDialog(
@@ -32,17 +33,11 @@ class MapperDialog(
     private val event: AnActionEvent
 ) : DialogWrapper(project) {
 
-    private val sourceClassField = JBTextField().apply {
-        text = event.getData(CommonDataKeys.PSI_FILE)
-            ?.findDescendantOfType<KtClass>()
-            ?.kotlinFqName
-            ?.asString()
-            .orEmpty()
-    }
+    private val controller = MapperDialogController(::updateState)
+
+    private val sourceClassField = JBTextField()
     private val targetClassField = JBTextField()
-    private val targetFileField = JBTextField().apply {
-        text = event.getData(CommonDataKeys.PSI_FILE)?.name.orEmpty()
-    }
+    private val targetFileField = JBTextField()
     private val extensionFunctionRadio = JRadioButton(EXTENSION_FUNCTION, true)
     private val globalFunctionRadio = JRadioButton(GLOBAL_FUNCTION)
     private val classRadio = JRadioButton(SEPARATE_CLASS)
@@ -55,6 +50,25 @@ class MapperDialog(
     }
 
     override fun createCenterPanel(): JComponent {
+        sourceClassField.document.onUpdate {
+            controller.onUpdateSourceClassField(sourceClassField.text.length)
+        }
+        targetClassField.document.onUpdate {
+            controller.onUpdateTargetClassField(targetClassField.text.length)
+        }
+        targetFileField.document.onUpdate {
+            controller.onUpdateTargetFileFieldSize(targetFileField.text.length)
+        }
+
+        sourceClassField.text = event.getData(CommonDataKeys.PSI_FILE)
+                ?.findDescendantOfType<KtClass>()
+                ?.kotlinFqName
+                ?.asString()
+                .orEmpty()
+
+        targetFileField.text = event.getData(CommonDataKeys.PSI_FILE)?.name.orEmpty()
+
+
         val mainPanel = JPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
         }
@@ -101,10 +115,6 @@ class MapperDialog(
             add(classRadio)
         }
 
-        sourceClassField.document.onUpdate(::updateOkButtonState)
-        targetClassField.document.onUpdate(::updateOkButtonState)
-        targetFileField.document.onUpdate(::updateOkButtonState)
-
         mainPanel.add(sourcePanel)
         mainPanel.add(targetPanel)
         mainPanel.add(targetFilePanel)
@@ -124,6 +134,10 @@ class MapperDialog(
             targetFileField.text,
             extensionFunctionRadio.isSelected
         )
+    }
+
+    private fun updateState(new: MapperDialogState) {
+        okAction.isEnabled = new.generateButtonEnabled
     }
 
     private fun createSelectClassButton(
@@ -151,14 +165,6 @@ class MapperDialog(
                 }
             }
         }
-    }
-
-    //refactor to observable
-    private fun updateOkButtonState(e: DocumentEvent?) {
-        val allFieldsFilled = sourceClassField.text.isNotEmpty() &&
-                targetClassField.text.isNotEmpty() &&
-                targetFileField.text.isNotEmpty()
-        okAction.isEnabled = allFieldsFilled
     }
 
     private fun showFolderChooser(fileField: JBTextField, dialogTitle: String) {
