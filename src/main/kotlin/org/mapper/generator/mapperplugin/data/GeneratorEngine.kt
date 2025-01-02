@@ -6,15 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
@@ -41,97 +36,72 @@ class GeneratorEngine(
 
     private val stringBuilder = StringBuilder()
 
-    fun run(): Result<String> {
+    fun run(): Result<Unit> {
         stringBuilder.clear()
         val sourceClass = findPsiClassUseCase.invoke(settings.sourceClassName)
+            ?: return Result.failure(Exception("Source class must be set"))
         val targetClass = findPsiClassUseCase(settings.targetClassName)
+            ?: return Result.failure(Exception("Target class must be set"))
 
-        if (sourceClass != null && targetClass != null) {
-            val prefix = if (settings.generationStrategy == GenerationStrategy.EXTENSION_FUNCTION)
-                "this"
-            else
-                LowerCaseStringUseCase(sourceClass.name.orEmpty()).invoke()
+        val prefix = if (settings.generationStrategy == GenerationStrategy.EXTENSION_FUNCTION)
+            "this"
+        else
+            LowerCaseStringUseCase(sourceClass.name.orEmpty()).invoke()
 
-            val targetFile = findKtFileUseCase.invoke(settings.selectedFileName)
-                ?: (sourceClass as KtLightClassForSourceDeclaration).kotlinOrigin.containingKtFile
-
-            if (settings.generationStrategy == GenerationStrategy.EXTENSION_FUNCTION) {
-                stringBuilder.append("fun ${sourceClass.name}.to${targetClass.name}(): ${targetClass.name} { return ${targetClass.name}(")
-                build(
-                    project = project,
-                    sourceClass = targetClass,
-                    targetClass = sourceClass,
-                    parentChainName = "",
-                    targetFile = targetFile,
-                    stringBuilder = stringBuilder,
-                    prefix = prefix
-                )
-                stringBuilder.append(")}")
-            } else {
-
-                stringBuilder.append("fun ${sourceClass.name}To${targetClass.name}(${LowerCaseStringUseCase(sourceClass.name.orEmpty()).invoke()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
-                build(
-                    project = project,
-                    sourceClass = targetClass,
-                    targetClass = sourceClass,
-                    parentChainName = "", targetFile = targetFile,
-                    stringBuilder = stringBuilder,
-                    prefix = prefix
-                )
-                stringBuilder.append(")}")
-            }
-            try {
-                appendGeneratedCode(
-                    project,
-                    settings.targetClassName,
-                    sourceClass,
-                    targetClass,
-                    targetFile,
-                    stringBuilder
-                )
-            } finally {
-                notificationUseCase.invoke()
-            }
-
+        if (settings.generationStrategy == GenerationStrategy.EXTENSION_FUNCTION) {
+            stringBuilder.append("fun ${sourceClass.name}.to${targetClass.name}(): ${targetClass.name} { return ${targetClass.name}(")
+            build(
+                project = project,
+                sourceClass = targetClass,
+                targetClass = sourceClass,
+                parentChainName = "",
+                stringBuilder = stringBuilder,
+                prefix = prefix
+            )
+            stringBuilder.append(")}")
+        } else {
+            stringBuilder.append("fun ${sourceClass.name}To${targetClass.name}(${LowerCaseStringUseCase(sourceClass.name.orEmpty()).invoke()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
+            build(
+                project = project,
+                sourceClass = targetClass,
+                targetClass = sourceClass,
+                parentChainName = "",
+                stringBuilder = stringBuilder,
+                prefix = prefix
+            )
+            stringBuilder.append(")}")
         }
-        return Result.success("")
+        appendGeneratedCode(
+            project = project,
+            settings = settings,
+            sourceClass = sourceClass,
+            targetClass = targetClass,
+            stringBuilder = stringBuilder
+        )
+        return Result.success(Unit)
     }
 
     private fun appendGeneratedCode(
         project: Project,
-        selectedFileName: String?,
+        settings: MappingSettings,
         sourceClass: PsiClass,
         targetClass: PsiClass,
-        targetFile: KtFile,
         stringBuilder: StringBuilder
     ) {
+        val targetFile = findKtFileUseCase.invoke(settings.selectedFileName)
+            ?: (sourceClass as KtLightClassForSourceDeclaration).kotlinOrigin.containingKtFile
+
         WriteCommandAction.runWriteCommandAction(project) {
             val psiFactory = KtPsiFactory(project)
 
-            val containingFile = targetFile ?: findKtFileByName(project, selectedFileName)
-            ?: (sourceClass as KtLightClassForSourceDeclaration).kotlinOrigin.containingKtFile
-
-            containingFile.findDescendantOfType<KtFunction> {
+            targetFile.findDescendantOfType<KtFunction> {
                 it.name?.contains("to${targetClass.name}") ?: false && it.receiverTypeReference?.text == sourceClass.name
             }?.apply {
                 delete()
             }
-
             val newFunction = psiFactory.createFunction(stringBuilder.toString())
-            containingFile.add(newFunction)
+            targetFile.add(newFunction)
         }
-    }
-
-    private fun findKtFileByName(project: Project, fileName: String?): KtFile? {
-        fileName ?: return null
-
-        val ktExtension = KotlinFileType.INSTANCE.defaultExtension
-        val ktFile: KtFile? =
-            FilenameIndex.getVirtualFilesByName(fileName, GlobalSearchScope.allScope(project)).find { virtualFile ->
-                virtualFile.extension == ktExtension && virtualFile.toPsiFile(project) is KtFile
-            }?.toPsiFile(project) as KtFile?
-
-        return ktFile
     }
 
     private fun build(
@@ -139,12 +109,14 @@ class GeneratorEngine(
         sourceClass: PsiClass,
         targetClass: PsiClass,
         parentChainName: String,
-        targetFile: KtFile,
         stringBuilder: StringBuilder,
         prefix: String
     ) {
+        val targetFile = findKtFileUseCase.invoke(settings.selectedFileName)
+            ?: (sourceClass as KtLightClassForSourceDeclaration).kotlinOrigin.containingKtFile
+
         WriteCommandAction.runWriteCommandAction(project) {
-            sourceClass.kotlinFqName?.let { targetFile?.addImport(it, false, null, project) }
+            sourceClass.kotlinFqName?.let { targetFile.addImport(it, false, null, project) }
         }
 
         sourceClass.fields.forEach { sourceField ->
@@ -160,7 +132,6 @@ class GeneratorEngine(
                         sourceClass = sourceField.type.asPsiClass()!!,
                         targetClass = targetField.type.asPsiClass()!!,
                         parentChainName = "$parentChainName.${sourceField.name}",
-                        targetFile = targetFile,
                         stringBuilder = stringBuilder,
                         prefix = prefix
                     )
