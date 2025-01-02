@@ -1,38 +1,34 @@
 package org.mapper.generator.mapperplugin.data
 
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.mapper.generator.mapperplugin.buisness.FindKtFileUseCase
 import org.mapper.generator.mapperplugin.buisness.FindPsiClassUseCase
 import org.mapper.generator.mapperplugin.buisness.LowerCaseStringUseCase
-import org.mapper.generator.mapperplugin.buisness.NotificationUseCase
 import org.mapper.generator.mapperplugin.data.states.GenerationStrategy
 import org.mapper.generator.mapperplugin.data.states.MappingSettings
+import java.io.File
 
-class GeneratorEngine(
+class MapperEngine(
     private val project: Project,
     private val settings: MappingSettings
 ) {
 
     private val findPsiClassUseCase = FindPsiClassUseCase(project)
     private val findKtFileUseCase = FindKtFileUseCase(project)
-    private val notificationUseCase = NotificationUseCase(
-        project = project,
-        groupName = "MapCraft",
-        content = "Mapping function generated",
-        type = NotificationType.INFORMATION
-    )
 
     private val stringBuilder = StringBuilder()
 
@@ -48,40 +44,71 @@ class GeneratorEngine(
         else
             LowerCaseStringUseCase(sourceClass.name.orEmpty()).invoke()
 
-        if (settings.generationStrategy == GenerationStrategy.EXTENSION_FUNCTION) {
-            stringBuilder.append("fun ${sourceClass.name}.to${targetClass.name}(): ${targetClass.name} { return ${targetClass.name}(")
-            build(
-                project = project,
-                sourceClass = targetClass,
-                targetClass = sourceClass,
-                parentChainName = "",
-                stringBuilder = stringBuilder,
-                prefix = prefix
-            )
-            stringBuilder.append(")}")
-        } else {
-            stringBuilder.append("fun ${sourceClass.name}To${targetClass.name}(${LowerCaseStringUseCase(sourceClass.name.orEmpty()).invoke()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
-            build(
-                project = project,
-                sourceClass = targetClass,
-                targetClass = sourceClass,
-                parentChainName = "",
-                stringBuilder = stringBuilder,
-                prefix = prefix
-            )
-            stringBuilder.append(")}")
+        when (settings.generationStrategy) {
+            GenerationStrategy.GLOBAL_FUNCTION -> {
+                stringBuilder.append("fun ${sourceClass.name.decapitalizeStr()}To${targetClass.name.capitalizeStr()}(${LowerCaseStringUseCase(sourceClass.name.orEmpty()).invoke()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
+                build(
+                    project = project,
+                    sourceClass = targetClass,
+                    targetClass = sourceClass,
+                    parentChainName = "",
+                    stringBuilder = stringBuilder,
+                    prefix = prefix
+                )
+                stringBuilder.append(")}")
+            }
+            GenerationStrategy.EXTENSION_FUNCTION -> {
+                stringBuilder.append("fun ${sourceClass.name}.to${targetClass.name.capitalizeStr()}(): ${targetClass.name} { return ${targetClass.name}(")
+                build(
+                    project = project,
+                    sourceClass = targetClass,
+                    targetClass = sourceClass,
+                    parentChainName = "",
+                    stringBuilder = stringBuilder,
+                    prefix = prefix
+                )
+                stringBuilder.append(")}")
+            }
+            GenerationStrategy.OBJECT -> {
+                stringBuilder.append("class ${sourceClass.name.capitalizeStr()}To${targetClass.name.capitalizeStr()}Mapper {")
+                stringBuilder.append("fun map(${LowerCaseStringUseCase(sourceClass.name.orEmpty()).invoke()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
+                build(
+                    project = project,
+                    sourceClass = targetClass,
+                    targetClass = sourceClass,
+                    parentChainName = "",
+                    stringBuilder = stringBuilder,
+                    prefix = prefix
+                )
+                stringBuilder.append(")}")
+                stringBuilder.append("}")
+            }
         }
-        appendGeneratedCode(
-            project = project,
-            settings = settings,
-            sourceClass = sourceClass,
-            targetClass = targetClass,
-            stringBuilder = stringBuilder
-        )
+
+        when (settings.generationStrategy) {
+            GenerationStrategy.GLOBAL_FUNCTION,
+            GenerationStrategy.EXTENSION_FUNCTION -> {
+                addGeneratedFunction(
+                    project = project,
+                    settings = settings,
+                    sourceClass = sourceClass,
+                    targetClass = targetClass,
+                    stringBuilder = stringBuilder
+                )
+            }
+            GenerationStrategy.OBJECT -> {
+                addGeneratedClass(
+                    project = project,
+                    settings = settings,
+                    stringBuilder = stringBuilder
+                )
+            }
+        }
+
         return Result.success(Unit)
     }
 
-    private fun appendGeneratedCode(
+    private fun addGeneratedFunction(
         project: Project,
         settings: MappingSettings,
         sourceClass: PsiClass,
@@ -104,6 +131,23 @@ class GeneratorEngine(
         }
     }
 
+    private fun addGeneratedClass(
+        project: Project,
+        settings: MappingSettings,
+        stringBuilder: StringBuilder
+    ) {
+
+        WriteCommandAction.runWriteCommandAction(project) {
+            val psiFactory = KtPsiFactory(project)
+
+            val newClass: KtClass = psiFactory.createClass(stringBuilder.toString())
+            val element = CodeStyleManager.getInstance(project).reformat(newClass)
+
+            val file = File(settings.selectedFileName, "Mapper.kt")
+            file.writeText(element.text)
+        }
+    }
+
     private fun build(
         project: Project,
         sourceClass: PsiClass,
@@ -112,7 +156,7 @@ class GeneratorEngine(
         stringBuilder: StringBuilder,
         prefix: String
     ) {
-        val targetFile = findKtFileUseCase.invoke(settings.selectedFileName)
+        val targetFile: KtFile = findKtFileUseCase.invoke(settings.selectedFileName)
             ?: (sourceClass as KtLightClassForSourceDeclaration).kotlinOrigin.containingKtFile
 
         WriteCommandAction.runWriteCommandAction(project) {
@@ -155,6 +199,10 @@ class GeneratorEngine(
         }
         return false
     }
+
+    private fun String?.capitalizeStr() = this?.replaceFirstChar { it.uppercase() }
+
+    private fun String?.decapitalizeStr() = this?.replaceFirstChar { it.lowercase() }
 
     private fun PsiType.asPsiClass(): PsiClass? = PsiUtil.resolveClassInType(this)
 }

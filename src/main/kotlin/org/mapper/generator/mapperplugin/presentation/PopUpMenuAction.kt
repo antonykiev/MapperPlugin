@@ -4,7 +4,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.mapper.generator.mapperplugin.buisness.NotificationUseCase
-import org.mapper.generator.mapperplugin.data.GeneratorEngine
+import org.mapper.generator.mapperplugin.data.MapperEngine
 import org.mapper.generator.mapperplugin.presentation.ui.MapperDialog
 
 class PopUpMenuAction : AnAction() {
@@ -22,7 +22,7 @@ class PopUpMenuAction : AnAction() {
         )
         if (!dialog.showAndGet()) return
 
-        GeneratorEngine(
+        MapperEngine(
             project = project,
             settings = dialog.mappingSetting()
         ).run().fold(

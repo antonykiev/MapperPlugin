@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
@@ -24,7 +25,6 @@ import java.awt.Color
 import java.awt.event.ItemEvent
 import javax.swing.*
 import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 import javax.swing.text.Document
 
 
@@ -62,7 +62,7 @@ class MapperDialog(
             controller.onUpdateTargetClassField(targetClassField.text.length)
         }
         targetFileField.document.onUpdate {
-            controller.onUpdateTargetFileFieldSize(targetFileField.text.length)
+            controller.onUpdateTargetFileFieldSize(targetFileField.text)
         }
 
         sourceClassField.text = event.getData(CommonDataKeys.PSI_FILE)
@@ -141,6 +141,7 @@ class MapperDialog(
     }
 
     private fun updateState(state: MapperDialogState) {
+        println("state = $state")
         okAction.isEnabled = state.generateButtonEnabled
 
         createSelectFileButton.actionListeners.forEach {
@@ -186,6 +187,7 @@ class MapperDialog(
 
         val selectedFolder: VirtualFile? = FileChooser.chooseFile(descriptor, project, null)
         fileField.text = selectedFolder?.path.orEmpty()
+        println("select folder ${selectedFolder?.path}")
     }
 
     private fun showFileChooser(fileField: JBTextField, dialogTitle: String) {
@@ -200,10 +202,12 @@ class MapperDialog(
 
     private fun Document.onUpdate(action: (DocumentEvent?) -> Unit) {
         addDocumentListener(
-            /* listener = */ object : DocumentListener {
-                override fun insertUpdate(e: DocumentEvent?) = action(e)
-                override fun removeUpdate(e: DocumentEvent?) = action(e)
-                override fun changedUpdate(e: DocumentEvent?) = action(e)
+            object : DocumentAdapter() {
+                override fun textChanged(e: DocumentEvent) {
+                    SwingUtilities.invokeLater {
+                        action(e)
+                    }
+                }
             }
         )
     }

@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import org.mapper.generator.mapperplugin.presentation.ui.MapperDialog.Constant.GENERATE_IN_FILE
 import org.mapper.generator.mapperplugin.presentation.ui.MapperDialog.Constant.GENERATE_IN_FOLDER
-import kotlin.properties.Delegates
 
 class MapperDialogController(
     private val onUpdateState: (MapperDialogState) -> Unit,
@@ -15,16 +14,16 @@ class MapperDialogController(
     private var targetClassFieldSize = 0
     private var targetFileFieldSize = 0
 
-    private var state by Delegates.observable(
-        initialValue = MapperDialogState(
-            generateButtonEnabled = false,
-            generateStrategy = GenerateStrategy.FILE,
-            targetFileField = event.getData(CommonDataKeys.PSI_FILE)?.name.orEmpty(),
-            generateInLabel = GENERATE_IN_FILE
-        )
-    ) { _, _, new ->
-        onUpdateState(new)
-    }
+    private var state = MapperDialogState(
+        generateButtonEnabled = false,
+        generateStrategy = GenerateStrategy.FILE,
+        targetFileField = event.getData(CommonDataKeys.PSI_FILE)?.name.orEmpty(),
+        generateInLabel = GENERATE_IN_FILE
+    )
+        private set(value) {
+            field = value
+            onUpdateState(value)
+        }
 
     fun onUpdateSourceClassField(fieldSize: Int) {
         sourceClassFieldSize = fieldSize
@@ -38,8 +37,9 @@ class MapperDialogController(
     }
 
 
-    fun onUpdateTargetFileFieldSize(fieldSize: Int) {
-        targetFileFieldSize = fieldSize
+    fun onUpdateTargetFileFieldSize(value: String) {
+        state = state.copy(targetFileField = value)
+        targetFileFieldSize = value.length
         validateGenerateButtonState()
     }
 
