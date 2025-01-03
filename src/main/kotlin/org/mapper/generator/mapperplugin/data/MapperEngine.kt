@@ -15,9 +15,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.mapper.generator.mapperplugin.buisness.FindKtFileUseCase
-import org.mapper.generator.mapperplugin.buisness.FindPsiClassUseCase
-import org.mapper.generator.mapperplugin.buisness.LowerCaseStringUseCase
+import org.mapper.generator.mapperplugin.buisness.*
 import org.mapper.generator.mapperplugin.data.states.GenerationStrategy
 import org.mapper.generator.mapperplugin.data.states.MappingSettings
 import java.io.File
@@ -70,7 +68,8 @@ class MapperEngine(
                 stringBuilder.append(")}")
             }
             GenerationStrategy.OBJECT -> {
-                stringBuilder.append("class ${sourceClass.name.capitalizeStr()}To${targetClass.name.capitalizeStr()}Mapper {")
+                val className = ClassNameUseCase(sourceClass, targetClass).invoke()
+                stringBuilder.append("class $className {")
                 stringBuilder.append("fun map(${LowerCaseStringUseCase(sourceClass.name.orEmpty()).invoke()}: ${sourceClass.name}): ${targetClass.name} { return ${targetClass.name}(")
                 build(
                     project = project,
@@ -99,6 +98,8 @@ class MapperEngine(
             GenerationStrategy.OBJECT -> {
                 addGeneratedClass(
                     project = project,
+                    sourceClass = sourceClass,
+                    targetClass = targetClass,
                     settings = settings,
                     stringBuilder = stringBuilder
                 )
@@ -133,6 +134,8 @@ class MapperEngine(
 
     private fun addGeneratedClass(
         project: Project,
+        sourceClass: PsiClass,
+        targetClass:PsiClass,
         settings: MappingSettings,
         stringBuilder: StringBuilder
     ) {
@@ -143,7 +146,8 @@ class MapperEngine(
             val newClass: KtClass = psiFactory.createClass(stringBuilder.toString())
             val element = CodeStyleManager.getInstance(project).reformat(newClass)
 
-            val file = File(settings.selectedFileName, "Mapper.kt")
+            val className = ClassNameUseCase(sourceClass, targetClass).invoke() + ".kt"
+            val file = File(settings.selectedFileName, className)
             file.writeText(element.text)
         }
     }
@@ -200,7 +204,7 @@ class MapperEngine(
         return false
     }
 
-    private fun String?.capitalizeStr() = this?.replaceFirstChar { it.uppercase() }
+    private fun String?.capitalizeStr() = CapitalizeString(this.orEmpty()).invoke()
 
     private fun String?.decapitalizeStr() = this?.replaceFirstChar { it.lowercase() }
 
